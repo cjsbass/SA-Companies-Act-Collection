@@ -1,0 +1,6 @@
+# Tell Cursor not to index these large directories
+scrapers_output/
+.venv/
+**/node_modules/
+**/__pycache__/
+**/.pytest_cache/ 

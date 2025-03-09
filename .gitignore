@@ -26,41 +26,126 @@ wheels/
 env/
 venv/
 ENV/
+env.bak/
+venv.bak/
 
-# IDE
+# IDE specific files
 .idea/
 .vscode/
 *.swp
 *.swo
 .DS_Store
 
-# Logs
-*.log
+# Project specific
+scrapers_output/
+downloads/
 logs/
-log/
+*.log
+*.pdf
+*.rtf
+*.doc
+*.docx
+*.html
+*.txt
+!requirements.txt
+!README.md
+
+# Cursor specific
+.cursor/extensions/
+.cursor/logs/
+.cursor-cache/
+
+# Large data files
+*.json
+!package.json
+!package-lock.json
+
+# Large files and directories
+*.pdf
+*.doc
+*.docx
+*.rtf
+*.html
+*.txt
+!requirements.txt
+downloads/
+scrapers_output/
+logs/
+temp/
+cache/
+__pycache__/
+.pytest_cache/
+.coverage
+coverage/
+.tox/
+
+# Keep specific PDFs that are part of the project
+!scrapers_output/core_legislation/**/*.pdf
+
+# Jupyter Notebook
+.ipynb_checkpoints
+*.ipynb
+
+# Logs and databases
+*.sqlite
+*.db
+*.sqlite3
+
+# Local configuration
+.env
+config.local.json
+*.cfg
+*.conf
 
 # Temporary files
 *.tmp
 *.bak
 *.swp
 *~
+.*.sw?
+*.save
+*.autosave
 
-# Large binary files (PDFs, etc)
-*.pdf
-*.doc
-*.docx
-*.rtf
-
-# Output directories
-scrapers_output/
-downloads/
+# Output and data directories
 processed_data/
 bert_data/
+data/
+output/
+results/
+models/
+checkpoints/
 
-# Local configuration
+# Large data directories
+scrapers_output/
+bert_data/
+
+# Virtual environments
+.venv/
+.venv-explorer/
+
+# IDE files
+.vscode/
+.idea/
+__pycache__/
+*.pyc
+
+# Logs and temporary files
+*.log
+*.tmp
+tmp/
+logs/
+
+# Credentials and sensitive info
 .env
-config.local.json
+credentials.json
+*_credentials.*
+*.key
+*.pem
 
-# Jupyter Notebook
-.ipynb_checkpoints
-*.ipynb 
+# System files
+.DS_Store
+Thumbs.db
+
+# Keep specific files
+!scrapers_output/core_legislation/commercial/Companies*Act*.pdf
+!scrapers_output/core_legislation/regulatory/Broad-Based*Black*Economic*Empowerment*Act*.pdf 

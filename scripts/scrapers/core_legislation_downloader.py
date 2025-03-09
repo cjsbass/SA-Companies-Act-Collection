@@ -27,6 +27,11 @@ class CoreLegislationDownloader:
         # Define core legislation to download - gov.za only
         self.core_legislation = {
             "commercial": {
+                "Companies Act": {
+                    "number": "71",
+                    "year": "2008",
+                    "url": "https://www.gov.za/documents/companies-act"
+                },
                 "Consumer Protection Act": {
                     "number": "68",
                     "year": "2008",
