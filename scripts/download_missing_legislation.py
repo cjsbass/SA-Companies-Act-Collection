@@ -1,24 +1,22 @@
 #!/usr/bin/env python3
 """
-download_missing_legislation.py - Script to download missing core legislation.
-
-This script works with the organize_documents.py script to identify and download
-missing core legislation from government and legal websites.
+Script to download missing legislation from the checklist.
+This script supports downloading specific acts or downloading multiple acts concurrently.
 """
 
 import os
 import sys
+import subprocess
+import argparse
 import requests
 import logging
-import re
-import argparse
-import tempfile
-import shutil
+import concurrent.futures
 from pathlib import Path
-from urllib.parse import urljoin
-from bs4 import BeautifulSoup
+from tqdm import tqdm
+import time
+import random
 
-# Setup logging
+# Set up logging
 logging.basicConfig(
     level=logging.INFO,
     format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
@@ -27,422 +25,331 @@ logging.basicConfig(
 logger = logging.getLogger("LegislationDownloader")
 
 # Constants
-SCRAPERS_OUTPUT_DIR = "scrapers_output"
-CORE_LEGISLATION_DIR = os.path.join(SCRAPERS_OUTPUT_DIR, "core_legislation")
-
-# Key legislation that should be present
-KEY_LEGISLATION = {
-    "commercial": [
-        {
-            "name": "Companies Act",
-            "number": "71",
-            "year": "2008",
-            "url": "https://www.gov.za/documents/companies-act",
-            "description": "South African Companies Act"
-        },
-        {
-            "name": "Consumer Protection Act",
-            "number": "68",
-            "year": "2008",
-            "url": "https://www.gov.za/documents/consumer-protection-act",
-            "description": "Consumer Protection Act"
-        },
-        {
-            "name": "Competition Act",
-            "number": "89",
-            "year": "1998",
-            "url": "https://www.gov.za/documents/competition-act",
-            "description": "Competition Act"
-        },
-        {
-            "name": "Copyright Act",
-            "number": "98",
-            "year": "1978",
-            "url": "https://www.gov.za/documents/copyright-act",
-            "description": "Copyright Act"
-        }
-    ],
-    "financial": [
-        {
-            "name": "Financial Intelligence Centre Act",
-            "number": "38",
-            "year": "2001",
-            "url": "https://www.gov.za/documents/financial-intelligence-centre-act",
-            "description": "Financial Intelligence Centre Act"
-        },
-        {
-            "name": "Financial Sector Regulation Act",
-            "number": "9",
-            "year": "2017",
-            "url": "https://www.gov.za/documents/financial-sector-regulation-act-9-2017-22-aug-2017-0000",
-            "description": "Financial Sector Regulation Act"
-        },
-        {
-            "name": "National Credit Act",
-            "number": "34",
-            "year": "2005",
-            "url": "https://www.gov.za/documents/national-credit-act",
-            "description": "National Credit Act"
-        }
-    ],
-    "regulatory": [
-        {
-            "name": "Promotion of Access to Information Act",
-            "number": "2",
-            "year": "2000",
-            "url": "https://www.gov.za/documents/promotion-access-information-act",
-            "description": "Promotion of Access to Information Act"
-        },
-        {
-            "name": "Protection of Personal Information Act",
-            "number": "4",
-            "year": "2013",
-            "url": "https://www.gov.za/documents/protection-personal-information-act",
-            "description": "Protection of Personal Information Act"
-        },
-        {
-            "name": "Broad-Based Black Economic Empowerment Act",
-            "number": "53",
-            "year": "2003",
-            "url": "https://www.gov.za/documents/broad-based-black-economic-empowerment-act",
-            "description": "Broad-Based Black Economic Empowerment Act"
-        }
-    ]
+BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+OUTPUT_DIR = os.path.join(BASE_DIR, "scrapers_output", "core_legislation")
+CHECKLIST_FILE = os.path.join(BASE_DIR, "SA_LEGAL_LLM_CHECKLIST.md")
+HEADERS = {
+    'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36'
 }
 
 class LegislationDownloader:
-    """Class to handle the downloading of missing legislation."""
+    """Class to download missing legislation from various sources."""
     
     def __init__(self, base_dir="."):
         """Initialize with the base directory of the repository."""
         self.base_dir = base_dir
-        self.core_legislation_dir = os.path.join(base_dir, CORE_LEGISLATION_DIR)
-        
-        # Create subdirectories if they don't exist
-        for category in KEY_LEGISLATION.keys():
-            category_dir = os.path.join(self.core_legislation_dir, category)
-            os.makedirs(category_dir, exist_ok=True)
-        
-        # Session for HTTP requests
+        self.output_dir = os.path.join(base_dir, "scrapers_output", "core_legislation")
+        self.checklist_file = os.path.join(base_dir, "SA_LEGAL_LLM_CHECKLIST.md")
         self.session = requests.Session()
-        self.session.headers.update({
-            'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36'
-        })
+        self.session.headers.update(HEADERS)
+        
+        # Create output directories if they don't exist
+        os.makedirs(os.path.join(self.output_dir, "constitutional"), exist_ok=True)
+        os.makedirs(os.path.join(self.output_dir, "criminal"), exist_ok=True)
+        os.makedirs(os.path.join(self.output_dir, "commercial"), exist_ok=True)
+        os.makedirs(os.path.join(self.output_dir, "labor"), exist_ok=True)
+        os.makedirs(os.path.join(self.output_dir, "environmental"), exist_ok=True)
+        os.makedirs(os.path.join(self.output_dir, "tax"), exist_ok=True)
+        os.makedirs(os.path.join(self.output_dir, "digital"), exist_ok=True)
     
     def is_legislation_present(self, act, category):
-        """Check if legislation is already present in the repository."""
-        category_dir = os.path.join(self.core_legislation_dir, category)
-        act_pattern = f"{act['name']}.*{act['number']}.*{act['year']}|{act['number']}.*{act['year']}.*{act['name']}"
+        """Check if the legislation is already downloaded."""
+        category_dir = os.path.join(self.output_dir, category)
         
-        for root, _, files in os.walk(category_dir):
-            for file in files:
-                if re.search(act_pattern, file, re.IGNORECASE):
-                    logger.info(f"Found {act['name']} at {os.path.join(root, file)}")
+        # Check if any file in the directory contains the act name
+        if os.path.exists(category_dir):
+            for filename in os.listdir(category_dir):
+                if act.lower() in filename.lower():
+                    logger.info(f"{act} already exists in {category_dir}")
                     return True
         
         return False
     
-    def download_pdf_from_govza(self, act, category):
-        """
-        Download a PDF from the gov.za website.
-        
-        The gov.za website typically has a page for each act with links to PDF versions.
-        This method finds those links and downloads the PDF.
-        """
-        url = act['url']
-        logger.info(f"Downloading {act['name']} from {url}")
-        
-        try:
-            # Get the main page for the act
-            response = self.session.get(url)
-            response.raise_for_status()
-            
-            # Parse the HTML
-            soup = BeautifulSoup(response.text, 'html.parser')
-            
-            # Look for PDF links
-            pdf_links = []
-            for link in soup.find_all('a', href=True):
-                href = link['href']
-                if href.endswith('.pdf'):
-                    pdf_links.append(urljoin(url, href))
-            
-            if not pdf_links:
-                logger.warning(f"No PDF links found for {act['name']} at {url}")
-                return False
-            
-            # Download the first PDF (typically the main act)
-            pdf_url = pdf_links[0]
-            
-            # Create a temporary file to download to
-            with tempfile.NamedTemporaryFile(delete=False) as temp_file:
-                pdf_response = self.session.get(pdf_url, stream=True)
-                pdf_response.raise_for_status()
-                
-                # Write the PDF to the temporary file
-                for chunk in pdf_response.iter_content(chunk_size=8192):
-                    if chunk:
-                        temp_file.write(chunk)
-                
-                temp_file_path = temp_file.name
-            
-            # Construct the final path
-            filename = f"{act['name']} {act['number']} of {act['year']}.pdf"
-            target_path = os.path.join(self.core_legislation_dir, category, filename)
-            
-            # Move the temporary file to the final location
-            shutil.move(temp_file_path, target_path)
-            logger.info(f"Downloaded {act['name']} to {target_path}")
-            
+    def download_pdf_from_govza(self, act, category, urls=None, output_filename=None):
+        """Download a PDF from gov.za or specified URLs."""
+        if self.is_legislation_present(act, category):
+            logger.info(f"{act} already downloaded, skipping")
             return True
-        
-        except Exception as e:
-            logger.error(f"Error downloading {act['name']}: {str(e)}")
+            
+        if not urls:
+            logger.error(f"No URLs provided for {act}")
             return False
+            
+        if not output_filename:
+            # Create a sanitized filename
+            output_filename = act.replace(" ", "_").replace("/", "_").lower() + ".pdf"
+        
+        output_path = os.path.join(self.output_dir, category, output_filename)
+        
+        # Try each URL until successful
+        for url in urls:
+            try:
+                logger.info(f"Downloading {act} from {url}")
+                
+                # Add a small random delay to avoid overloading servers
+                time.sleep(random.uniform(0.5, 2.0))
+                
+                response = self.session.get(url, stream=True)
+                response.raise_for_status()
+                
+                # Get the total file size for progress bar
+                total_size = int(response.headers.get('content-length', 0))
+                
+                # Show a progress bar
+                with open(output_path, 'wb') as f, tqdm(
+                    desc=act,
+                    total=total_size,
+                    unit='B',
+                    unit_scale=True,
+                    unit_divisor=1024,
+                ) as bar:
+                    for chunk in response.iter_content(chunk_size=8192):
+                        size = f.write(chunk)
+                        bar.update(size)
+                
+                logger.info(f"Successfully downloaded {act} to {output_path}")
+                
+                # Update the checklist
+                self.update_checklist_item(act)
+                
+                return True
+                
+            except Exception as e:
+                logger.warning(f"Failed to download {act} from {url}: {e}")
+                continue
+        
+        logger.error(f"All download attempts failed for {act}")
+        return False
+    
+    def update_checklist_item(self, act):
+        """Update the checklist to mark an item as completed."""
+        try:
+            # Read the current checklist
+            with open(self.checklist_file, 'r') as f:
+                lines = f.readlines()
+            
+            # Find the line containing the act and update it
+            for i, line in enumerate(lines):
+                # Look for unchecked items containing the act name
+                if '- [ ]' in line and act.lower() in line.lower():
+                    lines[i] = line.replace('- [ ]', '- [x]')
+                    logger.info(f"Updated checklist for {act}")
+                    break
+            
+            # Write the updated checklist
+            with open(self.checklist_file, 'w') as f:
+                f.writelines(lines)
+                
+            # Run the checklist update script
+            self.run_checklist_update()
+                
+        except Exception as e:
+            logger.error(f"Failed to update checklist for {act}: {e}")
+    
+    def run_checklist_update(self):
+        """Run the update_llm_checklist.py script to recalculate progress."""
+        try:
+            subprocess.run([sys.executable, os.path.join(self.base_dir, "scripts", "update_llm_checklist.py")], 
+                           check=True, 
+                           stdout=subprocess.PIPE, 
+                           stderr=subprocess.PIPE)
+            logger.info("Updated checklist statistics")
+        except subprocess.CalledProcessError as e:
+            logger.error(f"Failed to update checklist statistics: {e}")
+    
+    def download_copyright_act(self):
+        """Download the Copyright Act 98 of 1978."""
+        urls = [
+            "https://www.gov.za/sites/default/files/gcis_document/201504/act-98-1978.pdf",
+            "https://www.wipo.int/edocs/lexdocs/laws/en/za/za002en.pdf",
+            "https://cipc.co.za/images/Copyright_Act.pdf"
+        ]
+        return self.download_pdf_from_govza(
+            "Copyright Act 98 of 1978",
+            "commercial",
+            urls=urls
+        )
+    
+    def download_prevention_of_organised_crime_act(self):
+        """Download the Prevention of Organised Crime Act 121 of 1998."""
+        urls = [
+            "https://www.gov.za/sites/default/files/gcis_document/201409/a121-98.pdf",
+            "https://www.justice.gov.za/legislation/acts/1998-121.pdf"
+        ]
+        return self.download_pdf_from_govza(
+            "Prevention of Organised Crime Act 121 of 1998",
+            "criminal",
+            urls=urls
+        )
+    
+    def download_basic_conditions_of_employment_act(self):
+        """Download the Basic Conditions of Employment Act 75 of 1997."""
+        urls = [
+            "https://www.gov.za/sites/default/files/gcis_document/201409/a75-97.pdf",
+            "https://www.labour.gov.za/DocumentCenter/Acts/Basic%20Conditions%20of%20Employment%20Act.pdf"
+        ]
+        return self.download_pdf_from_govza(
+            "Basic Conditions of Employment Act 75 of 1997",
+            "labor",
+            urls=urls
+        )
+    
+    def download_national_environmental_management_act(self):
+        """Download the National Environmental Management Act 107 of 1998."""
+        urls = [
+            "https://www.gov.za/sites/default/files/gcis_document/201409/a107-98.pdf",
+            "https://www.environment.gov.za/sites/default/files/legislations/nema_amendment_act107.pdf"
+        ]
+        return self.download_pdf_from_govza(
+            "National Environmental Management Act 107 of 1998",
+            "environmental",
+            urls=urls
+        )
+    
+    def download_mineral_resources_act(self):
+        """Download the Mineral and Petroleum Resources Development Act 28 of 2002."""
+        urls = [
+            "https://www.gov.za/sites/default/files/gcis_document/201409/a28-020.pdf",
+            "https://www.dmr.gov.za/Portals/0/pdf/acts/mprda.pdf"
+        ]
+        return self.download_pdf_from_govza(
+            "Mineral and Petroleum Resources Development Act 28 of 2002",
+            "environmental",
+            urls=urls
+        )
+    
+    def download_income_tax_act(self):
+        """Download the Income Tax Act 58 of 1962."""
+        urls = [
+            "https://www.gov.za/sites/default/files/gcis_document/201505/act-58-1962s.pdf",
+            "https://www.sars.gov.za/wp-content/uploads/Legal/Acts/LAPD-LPrim-Act-2012-01-Income-Tax-Act-1962.pdf"
+        ]
+        return self.download_pdf_from_govza(
+            "Income Tax Act 58 of 1962",
+            "tax",
+            urls=urls
+        )
+    
+    def download_tax_administration_act(self):
+        """Download the Tax Administration Act 28 of 2011."""
+        urls = [
+            "https://www.gov.za/sites/default/files/gcis_document/201409/a282011.pdf",
+            "https://www.sars.gov.za/wp-content/uploads/Legal/Acts/LAPD-LPrim-Act-2012-02-Tax-Administration-Act-2011.pdf",
+            "https://www.saflii.org/za/legis/consol_act/taa2011215/taa2011a28o2011.pdf"
+        ]
+        return self.download_pdf_from_govza(
+            "Tax Administration Act 28 of 2011",
+            "tax",
+            urls=urls
+        )
+    
+    def download_customs_and_excise_act(self):
+        """Download the Customs and Excise Act 91 of 1964."""
+        urls = [
+            "https://www.gov.za/sites/default/files/gcis_document/201505/act-91-1964s.pdf",
+            "https://www.sars.gov.za/wp-content/uploads/Legal/Acts/LAPD-LPrim-Act-2012-04-Customs-and-Excise-Act-1964.pdf"
+        ]
+        return self.download_pdf_from_govza(
+            "Customs and Excise Act 91 of 1964",
+            "tax",
+            urls=urls
+        )
+    
+    def download_electronic_communications_act(self):
+        """Download the Electronic Communications and Transactions Act 25 of 2002."""
+        urls = [
+            "https://www.gov.za/sites/default/files/gcis_document/201409/a25-02.pdf",
+            "https://www.justice.gov.za/legislation/acts/2002-025.pdf"
+        ]
+        return self.download_pdf_from_govza(
+            "Electronic Communications and Transactions Act 25 of 2002",
+            "digital",
+            urls=urls
+        )
     
     def download_all_missing_legislation(self):
-        """Download all missing legislation."""
-        success_count = 0
-        failure_count = 0
+        """Download all missing legislation concurrently."""
+        logger.info("Starting concurrent download of all missing legislation")
         
-        for category, acts in KEY_LEGISLATION.items():
-            for act in acts:
-                if not self.is_legislation_present(act, category):
-                    success = self.download_pdf_from_govza(act, category)
-                    if success:
-                        success_count += 1
-                    else:
-                        failure_count += 1
+        download_functions = [
+            self.download_copyright_act,
+            self.download_prevention_of_organised_crime_act,
+            self.download_basic_conditions_of_employment_act,
+            self.download_national_environmental_management_act,
+            self.download_mineral_resources_act,
+            self.download_income_tax_act,
+            self.download_tax_administration_act,
+            self.download_customs_and_excise_act,
+            self.download_electronic_communications_act
+        ]
         
-        logger.info(f"Download complete. Successes: {success_count}, Failures: {failure_count}")
-        return success_count, failure_count
+        results = []
+        with concurrent.futures.ThreadPoolExecutor(max_workers=3) as executor:
+            # Submit all downloads and keep track of futures
+            future_to_func = {executor.submit(func): func.__name__ for func in download_functions}
+            
+            # Process results as they complete
+            for future in concurrent.futures.as_completed(future_to_func):
+                func_name = future_to_func[future]
+                try:
+                    result = future.result()
+                    logger.info(f"Completed {func_name}: {'Success' if result else 'Failed'}")
+                    results.append((func_name, result))
+                except Exception as e:
+                    logger.error(f"Error in {func_name}: {e}")
+                    results.append((func_name, False))
+        
+        # Summarize results
+        successes = sum(1 for _, result in results if result)
+        logger.info(f"Downloaded {successes}/{len(download_functions)} missing documents")
+        
+        return results
 
 def main():
     """Main function to run the legislation downloader."""
-    parser = argparse.ArgumentParser(description="Download missing core legislation.")
-    parser.add_argument("--category", choices=KEY_LEGISLATION.keys(), help="Download only legislation in this category")
-    parser.add_argument("--act", help="Download only the specified act (partial name match)")
-    parser.add_argument("--force", action="store_true", help="Force download even if already present")
-    parser.add_argument("--constitution", action="store_true", help="Download the Constitution of South Africa")
-    parser.add_argument("--criminal-procedure", action="store_true", help="Download the Criminal Procedure Act")
-    parser.add_argument("--labour-relations", action="store_true", help="Download the Labour Relations Act")
+    parser = argparse.ArgumentParser(description="Download missing legislation from various sources.")
+    parser.add_argument("--all", action="store_true", help="Download all missing legislation concurrently")
+    parser.add_argument("--copyright", action="store_true", help="Download the Copyright Act")
+    parser.add_argument("--organised-crime", action="store_true", help="Download the Prevention of Organised Crime Act")
+    parser.add_argument("--employment", action="store_true", help="Download the Basic Conditions of Employment Act")
+    parser.add_argument("--environmental", action="store_true", help="Download the National Environmental Management Act")
+    parser.add_argument("--mineral", action="store_true", help="Download the Mineral Resources Development Act")
+    parser.add_argument("--income-tax", action="store_true", help="Download the Income Tax Act")
+    parser.add_argument("--tax-admin", action="store_true", help="Download the Tax Administration Act")
+    parser.add_argument("--customs", action="store_true", help="Download the Customs and Excise Act")
+    parser.add_argument("--electronic", action="store_true", help="Download the Electronic Communications Act")
+    
     args = parser.parse_args()
     
-    downloader = LegislationDownloader()
+    downloader = LegislationDownloader(BASE_DIR)
     
-    if args.labour_relations:
-        # Special case for the Labour Relations Act
-        logger.info("Downloading the Labour Relations Act 66 of 1995")
-        
-        # Create the labour category if it doesn't exist
-        labour_dir = os.path.join(downloader.core_legislation_dir, "labour")
-        os.makedirs(labour_dir, exist_ok=True)
-        
-        # URLs for the Labour Relations Act
-        labour_urls = [
-            "https://www.gov.za/sites/default/files/gcis_document/201409/act66-1995labourrelations.pdf",  # Gov.za version
-            "https://www.labour.gov.za/DocumentCenter/Acts/Labour%20Relations%20Act/Labour%20Relations%20Act,%201995%20(Act%20No%2066%20of%201995).pdf",  # Labour dept version
-            "https://www.saqa.org.za/docs/legislation/2018/Labour-Relations-Act.pdf"  # SAQA version
-        ]
-        
-        # Try each URL until one works
-        success = False
-        for url in labour_urls:
-            try:
-                # Create a temporary file to download to
-                with tempfile.NamedTemporaryFile(delete=False) as temp_file:
-                    logger.info(f"Trying to download from {url}")
-                    
-                    # Set up a session with proper headers
-                    session = requests.Session()
-                    session.headers.update({
-                        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36'
-                    })
-                    
-                    # Download the file
-                    response = session.get(url, stream=True)
-                    response.raise_for_status()
-                    
-                    # Write the PDF to a temporary file
-                    for chunk in response.iter_content(chunk_size=8192):
-                        if chunk:
-                            temp_file.write(chunk)
-                    
-                    temp_file_path = temp_file.name
-                
-                # Construct the final path
-                target_path = os.path.join(labour_dir, "Labour Relations Act 66 of 1995.pdf")
-                
-                # Move the temporary file to the final location
-                shutil.move(temp_file_path, target_path)
-                logger.info(f"Labour Relations Act downloaded to {target_path}")
-                
-                success = True
-                break
-            except Exception as e:
-                logger.error(f"Error downloading from {url}: {str(e)}")
-        
-        if success:
-            return 0
-        else:
-            logger.error("Failed to download the Labour Relations Act from any source")
-            return 1
+    if args.all:
+        results = downloader.download_all_missing_legislation()
+        sys.exit(0 if all(result for _, result in results) else 1)
     
-    elif args.criminal_procedure:
-        # Special case for the Criminal Procedure Act
-        logger.info("Downloading the Criminal Procedure Act 51 of 1977")
-        
-        # Create the criminal category if it doesn't exist
-        criminal_dir = os.path.join(downloader.core_legislation_dir, "criminal")
-        os.makedirs(criminal_dir, exist_ok=True)
-        
-        # URLs for the Criminal Procedure Act
-        criminal_procedure_urls = [
-            "https://www.gov.za/sites/default/files/gcis_document/201503/act-51-1977.pdf",  # Gov.za version
-            "https://www.justice.gov.za/legislation/acts/1977-051.pdf",  # Justice dept version
-            "https://www.lawsoc.co.za/upload/files/CRIMINAL%20PROCEDURE%20ACT.pdf"  # Law Society version
-        ]
-        
-        # Try each URL until one works
-        success = False
-        for url in criminal_procedure_urls:
-            try:
-                # Create a temporary file to download to
-                with tempfile.NamedTemporaryFile(delete=False) as temp_file:
-                    logger.info(f"Trying to download from {url}")
-                    
-                    # Set up a session with proper headers
-                    session = requests.Session()
-                    session.headers.update({
-                        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36'
-                    })
-                    
-                    # Download the file
-                    response = session.get(url, stream=True)
-                    response.raise_for_status()
-                    
-                    # Write the PDF to a temporary file
-                    for chunk in response.iter_content(chunk_size=8192):
-                        if chunk:
-                            temp_file.write(chunk)
-                    
-                    temp_file_path = temp_file.name
-                
-                # Construct the final path
-                target_path = os.path.join(criminal_dir, "Criminal Procedure Act 51 of 1977.pdf")
-                
-                # Move the temporary file to the final location
-                shutil.move(temp_file_path, target_path)
-                logger.info(f"Criminal Procedure Act downloaded to {target_path}")
-                
-                success = True
-                break
-            except Exception as e:
-                logger.error(f"Error downloading from {url}: {str(e)}")
-        
-        if success:
-            return 0
-        else:
-            logger.error("Failed to download the Criminal Procedure Act from any source")
-            return 1
+    # Individual downloads
+    if args.copyright:
+        downloader.download_copyright_act()
+    if args.organised_crime:
+        downloader.download_prevention_of_organised_crime_act()
+    if args.employment:
+        downloader.download_basic_conditions_of_employment_act()
+    if args.environmental:
+        downloader.download_national_environmental_management_act()
+    if args.mineral:
+        downloader.download_mineral_resources_act()
+    if args.income_tax:
+        downloader.download_income_tax_act()
+    if args.tax_admin:
+        downloader.download_tax_administration_act()
+    if args.customs:
+        downloader.download_customs_and_excise_act()
+    if args.electronic:
+        downloader.download_electronic_communications_act()
     
-    elif args.constitution:
-        # Special case for the Constitution
-        logger.info("Downloading the Constitution of South Africa (1996)")
-        
-        # Create the constitutional category if it doesn't exist
-        const_dir = os.path.join(downloader.core_legislation_dir, "constitutional")
-        os.makedirs(const_dir, exist_ok=True)
-        
-        # URLs for the Constitution
-        constitution_urls = [
-            "https://www.gov.za/sites/default/files/gcis_document/201409/act108of1996s.pdf",  # Official version
-            "https://www.justice.gov.za/legislation/constitution/SAConstitution-web-eng.pdf",  # Justice dept version
-            "https://www.concourt.org.za/images/phocadownload/the_constitution/the-constitution-of-the-republic-of-south-africa.pdf"  # Constitutional Court version
-        ]
-        
-        # Try each URL until one works
-        success = False
-        for url in constitution_urls:
-            try:
-                # Create a temporary file to download to
-                with tempfile.NamedTemporaryFile(delete=False) as temp_file:
-                    logger.info(f"Trying to download from {url}")
-                    
-                    # Set up a session with proper headers
-                    session = requests.Session()
-                    session.headers.update({
-                        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36'
-                    })
-                    
-                    # Download the file
-                    response = session.get(url, stream=True)
-                    response.raise_for_status()
-                    
-                    # Write the PDF to a temporary file
-                    for chunk in response.iter_content(chunk_size=8192):
-                        if chunk:
-                            temp_file.write(chunk)
-                    
-                    temp_file_path = temp_file.name
-                
-                # Construct the final path
-                target_path = os.path.join(const_dir, "Constitution of South Africa 1996.pdf")
-                
-                # Move the temporary file to the final location
-                shutil.move(temp_file_path, target_path)
-                logger.info(f"Constitution downloaded to {target_path}")
-                
-                success = True
-                break
-            except Exception as e:
-                logger.error(f"Error downloading from {url}: {str(e)}")
-        
-        if success:
-            return 0
-        else:
-            logger.error("Failed to download the Constitution from any source")
-            return 1
-    
-    elif args.act:
-        # Download a specific act
-        found = False
-        for category, acts in KEY_LEGISLATION.items():
-            if args.category and category != args.category:
-                continue
-                
-            for act in acts:
-                if args.act.lower() in act['name'].lower():
-                    if args.force or not downloader.is_legislation_present(act, category):
-                        if downloader.download_pdf_from_govza(act, category):
-                            logger.info(f"Successfully downloaded {act['name']}")
-                        else:
-                            logger.error(f"Failed to download {act['name']}")
-                    else:
-                        logger.info(f"{act['name']} is already present")
-                    found = True
-        
-        if not found:
-            logger.error(f"No acts found matching '{args.act}'")
-    
-    elif args.category:
-        # Download all acts in a category
-        success_count = 0
-        failure_count = 0
-        
-        for act in KEY_LEGISLATION[args.category]:
-            if args.force or not downloader.is_legislation_present(act, args.category):
-                success = downloader.download_pdf_from_govza(act, args.category)
-                if success:
-                    success_count += 1
-                else:
-                    failure_count += 1
-        
-        logger.info(f"Category download complete. Successes: {success_count}, Failures: {failure_count}")
-    
-    else:
-        # Download all missing legislation
-        downloader.download_all_missing_legislation()
+    # If no arguments are provided, show help
+    if len(sys.argv) == 1:
+        parser.print_help()
 
 if __name__ == "__main__":
     main() 

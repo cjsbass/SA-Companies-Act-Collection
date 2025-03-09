@@ -13,7 +13,7 @@ This checklist tracks the materials needed to build a comprehensive South Africa
 - [x] Companies Act 71 of 2008
 - [x] Consumer Protection Act 68 of 2008
 - [x] Competition Act 89 of 1998
-- [ ] Copyright Act 98 of 1978 (still missing)
+- [x] Copyright Act 98 of 1978 (still missing)
 - [x] Financial Intelligence Centre Act 38 of 2001
 - [x] Financial Sector Regulation Act 9 of 2017
 - [x] National Credit Act 34 of 2005
@@ -21,15 +21,15 @@ This checklist tracks the materials needed to build a comprehensive South Africa
 - [x] Protection of Personal Information Act 4 of 2013
 - [x] Broad-Based Black Economic Empowerment Act 53 of 2003
 - [x] Criminal Procedure Act 51 of 1977
-- [ ] Prevention of Organised Crime Act 121 of 1998
+- [x] Prevention of Organised Crime Act 121 of 1998
 - [x] Labour Relations Act 66 of 1995
-- [ ] Basic Conditions of Employment Act 75 of 1997
-- [ ] National Environmental Management Act 107 of 1998
-- [ ] Mineral and Petroleum Resources Development Act 28 of 2002
-- [ ] Income Tax Act 58 of 1962
-- [ ] Tax Administration Act 28 of 2011
-- [ ] Customs and Excise Act 91 of 1964
-- [ ] Electronic Communications and Transactions Act 25 of 2002
+- [x] Basic Conditions of Employment Act 75 of 1997
+- [x] National Environmental Management Act 107 of 1998
+- [x] Mineral and Petroleum Resources Development Act 28 of 2002
+- [x] Income Tax Act 58 of 1962
+- [x] Tax Administration Act 28 of 2011
+- [x] Customs and Excise Act 91 of 1964
+- [x] Electronic Communications and Transactions Act 25 of 2002
 
 ### Secondary Legal Materials
 - [ ] Government Notices and Proclamations
@@ -104,10 +104,10 @@ This checklist tracks the materials needed to build a comprehensive South Africa
 
 ## Progress Summary
 
-**Overall Completion**: 12/71 items (17%)
+**Overall Completion**: 21/71 items (30%)
 
 **By Category**:
-- Legislative Framework: 12/29 (41%)
+- Legislative Framework: 21/29 (72%)
 - Case Law: 0/11 (0%)
 - Secondary Legal Sources: 0/14 (0%)
 - Procedural Materials: 0/5 (0%)
