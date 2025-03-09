@@ -48,7 +48,7 @@ This checklist tracks the materials needed to build a comprehensive South Africa
 - [x] Labour Court and Labour Appeal Court judgments
 - [x] Competition Tribunal and Appeal Court decisions
 - [x] Land Claims Court decisions
-- [ ] Tax Court judgments
+- [x] Tax Court judgments
 
 ### Lower Courts and Historical Cases
 - [x] Magistrates' Court reported cases
@@ -104,11 +104,11 @@ This checklist tracks the materials needed to build a comprehensive South Africa
 
 ## Progress Summary
 
-**Overall Completion**: 33/71 items (46%)
+**Overall Completion**: 34/71 items (48%)
 
 **By Category**:
 - Legislative Framework: 25/29 (86%)
-- Case Law: 7/11 (64%)
+- Case Law: 8/11 (73%)
 - Secondary Legal Sources: 0/14 (0%)
 - Procedural Materials: 1/5 (20%)
 - Historical and Contextual Materials: 0/5 (0%)
