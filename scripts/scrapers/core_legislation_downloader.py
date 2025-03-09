@@ -33,6 +33,13 @@ class CoreLegislationDownloader:
                     "url": "https://www.gov.za/sites/default/files/gcis_document/201409/act108of1996s.pdf"
                 }
             },
+            "criminal": {
+                "Criminal Procedure Act": {
+                    "number": "51",
+                    "year": "1977",
+                    "url": "https://www.justice.gov.za/legislation/acts/1977-051.pdf"
+                }
+            },
             "commercial": {
                 "Companies Act": {
                     "number": "71",

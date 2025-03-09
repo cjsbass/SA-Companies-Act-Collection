@@ -224,11 +224,70 @@ def main():
     parser.add_argument("--act", help="Download only the specified act (partial name match)")
     parser.add_argument("--force", action="store_true", help="Force download even if already present")
     parser.add_argument("--constitution", action="store_true", help="Download the Constitution of South Africa")
+    parser.add_argument("--criminal-procedure", action="store_true", help="Download the Criminal Procedure Act")
     args = parser.parse_args()
     
     downloader = LegislationDownloader()
     
-    if args.constitution:
+    if args.criminal_procedure:
+        # Special case for the Criminal Procedure Act
+        logger.info("Downloading the Criminal Procedure Act 51 of 1977")
+        
+        # Create the criminal category if it doesn't exist
+        criminal_dir = os.path.join(downloader.core_legislation_dir, "criminal")
+        os.makedirs(criminal_dir, exist_ok=True)
+        
+        # URLs for the Criminal Procedure Act
+        criminal_procedure_urls = [
+            "https://www.gov.za/sites/default/files/gcis_document/201503/act-51-1977.pdf",  # Gov.za version
+            "https://www.justice.gov.za/legislation/acts/1977-051.pdf",  # Justice dept version
+            "https://www.lawsoc.co.za/upload/files/CRIMINAL%20PROCEDURE%20ACT.pdf"  # Law Society version
+        ]
+        
+        # Try each URL until one works
+        success = False
+        for url in criminal_procedure_urls:
+            try:
+                # Create a temporary file to download to
+                with tempfile.NamedTemporaryFile(delete=False) as temp_file:
+                    logger.info(f"Trying to download from {url}")
+                    
+                    # Set up a session with proper headers
+                    session = requests.Session()
+                    session.headers.update({
+                        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36'
+                    })
+                    
+                    # Download the file
+                    response = session.get(url, stream=True)
+                    response.raise_for_status()
+                    
+                    # Write the PDF to a temporary file
+                    for chunk in response.iter_content(chunk_size=8192):
+                        if chunk:
+                            temp_file.write(chunk)
+                    
+                    temp_file_path = temp_file.name
+                
+                # Construct the final path
+                target_path = os.path.join(criminal_dir, "Criminal Procedure Act 51 of 1977.pdf")
+                
+                # Move the temporary file to the final location
+                shutil.move(temp_file_path, target_path)
+                logger.info(f"Criminal Procedure Act downloaded to {target_path}")
+                
+                success = True
+                break
+            except Exception as e:
+                logger.error(f"Error downloading from {url}: {str(e)}")
+        
+        if success:
+            return 0
+        else:
+            logger.error("Failed to download the Criminal Procedure Act from any source")
+            return 1
+    
+    elif args.constitution:
         # Special case for the Constitution
         logger.info("Downloading the Constitution of South Africa (1996)")
         
