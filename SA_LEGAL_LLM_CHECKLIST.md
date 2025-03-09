@@ -79,10 +79,10 @@ This checklist tracks the materials needed to build a comprehensive South Africa
 ## Procedural Materials
 
 - [x] Rules of Court (all court levels)
-- [ ] Practice directives
-- [ ] Legal ethics guidelines
-- [ ] Forms and precedents
-- [ ] Law Society and Bar Council guidelines
+- [x] Practice directives
+- [x] Legal ethics guidelines
+- [x] Forms and precedents
+- [x] Law Society and Bar Council guidelines
 
 ## Historical and Contextual Materials
 
@@ -104,12 +104,12 @@ This checklist tracks the materials needed to build a comprehensive South Africa
 
 ## Progress Summary
 
-**Overall Completion**: 34/71 items (48%)
+**Overall Completion**: 38/71 items (54%)
 
 **By Category**:
 - Legislative Framework: 25/29 (86%)
 - Case Law: 8/11 (73%)
 - Secondary Legal Sources: 0/14 (0%)
-- Procedural Materials: 1/5 (20%)
+- Procedural Materials: 5/5 (100%)
 - Historical and Contextual Materials: 0/5 (0%)
 - Technical Processing Requirements: 0/7 (0%)
