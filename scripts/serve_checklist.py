@@ -66,9 +66,58 @@ class ChecklistHandler(http.server.SimpleHTTPRequestHandler):
                     .checkbox-item {{
                         list-style-type: none;
                         margin-left: -20px;
+                        padding: 6px 8px;
+                        border-radius: 6px;
+                        margin-bottom: 5px;
+                        transition: background-color 0.3s;
+                    }}
+                    .checkbox-item:hover {{
+                        background-color: #f0f0f0;
+                    }}
+                    .checkbox-checked {{
+                        background-color: rgba(46, 160, 67, 0.15);
+                        border-left: 4px solid #2ea043;
+                    }}
+                    .checkbox-unchecked {{
+                        background-color: rgba(248, 81, 73, 0.15);
+                        border-left: 4px solid #f85149;
                     }}
                     .checkbox-item input {{
                         margin-right: 10px;
+                    }}
+                    .checkbox-label {{
+                        font-weight: 500;
+                    }}
+                    .progress-bar {{
+                        height: 10px;
+                        background-color: #eee;
+                        border-radius: 5px;
+                        margin: 10px 0;
+                    }}
+                    .progress-fill {{
+                        height: 100%;
+                        background-color: #2ea043;
+                        border-radius: 5px;
+                        transition: width 0.5s;
+                    }}
+                    .category-header {{
+                        display: flex;
+                        justify-content: space-between;
+                        align-items: center;
+                    }}
+                    .category-progress {{
+                        font-size: 14px;
+                        color: #666;
+                    }}
+                    details {{
+                        margin-bottom: 15px;
+                    }}
+                    details summary {{
+                        cursor: pointer;
+                        font-weight: bold;
+                        padding: 8px;
+                        background-color: #f6f8fa;
+                        border-radius: 6px;
                     }}
                 </style>
             </head>
@@ -82,9 +131,49 @@ class ChecklistHandler(http.server.SimpleHTTPRequestHandler):
                             // Replace markdown checkboxes with HTML checkboxes
                             text = text.replace(/- \\[([ xX])\\] (.*)/g, (match, checked, label) => {{
                                 const isChecked = checked.toLowerCase() === 'x';
-                                return `<div class="checkbox-item"><input type="checkbox" ${{isChecked ? 'checked' : ''}} disabled> ${{label}}</div>`;
+                                const checkboxClass = isChecked ? 'checkbox-checked' : 'checkbox-unchecked';
+                                const checkIcon = isChecked ? '✅' : '❌';
+                                return `<div class="checkbox-item ${{checkboxClass}}">
+                                           <span class="checkbox-icon">${{checkIcon}}</span>
+                                           <span class="checkbox-label">${{label}}</span>
+                                        </div>`;
                             }});
+                            
+                            // Replace section headers with collapsible sections that show progress
+                            text = text.replace(/(## ([^\\n]+))/g, (match, header, title) => {{
+                                if (title === 'Progress Summary') return match;
+                                return `<div class="category-header">
+                                          ${{header}}
+                                          <span class="category-progress" data-category="${{title.trim()}}">0%</span>
+                                        </div>
+                                        <div class="progress-bar">
+                                          <div class="progress-fill" data-category-bar="${{title.trim()}}" style="width: 0%"></div>
+                                        </div>`;
+                            }});
+                            
                             document.getElementById('content').innerHTML = marked.parse(text);
+                            
+                            // Calculate and display progress per category
+                            document.querySelectorAll('h2').forEach(header => {{
+                                if (header.textContent.includes('Progress Summary')) return;
+                                
+                                const categoryName = header.textContent.trim();
+                                const categoryItems = header.nextElementSibling.nextElementSibling.querySelectorAll('.checkbox-item');
+                                
+                                if (categoryItems.length === 0) return;
+                                
+                                const totalItems = categoryItems.length;
+                                const completedItems = Array.from(categoryItems).filter(item => 
+                                    item.classList.contains('checkbox-checked')).length;
+                                
+                                const percentage = Math.round((completedItems / totalItems) * 100);
+                                
+                                // Update the progress displays
+                                document.querySelector(`[data-category="${{categoryName}}"]`).textContent = 
+                                    `${{completedItems}}/${{totalItems}} (${{percentage}}%)`;
+                                document.querySelector(`[data-category-bar="${{categoryName}}"]`).style.width = 
+                                    `${{percentage}}%`;
+                            }});
                         }});
                 </script>
             </body>
@@ -97,22 +186,37 @@ class ChecklistHandler(http.server.SimpleHTTPRequestHandler):
 
 def main():
     """Start the HTTP server and open the checklist in a browser."""
+    global PORT
     print(f"Starting checklist server on port {PORT}...")
     
-    try:
-        with socketserver.TCPServer(("", PORT), ChecklistHandler) as httpd:
-            print(f"Serving at: http://localhost:{PORT}/checklist")
-            print(f"Press Ctrl+C to stop the server")
-            
-            # Open the checklist in the default browser
-            webbrowser.open(f"http://localhost:{PORT}/checklist")
-            
-            # Start the server
-            httpd.serve_forever()
-    except KeyboardInterrupt:
-        print("\nServer stopped.")
-    except Exception as e:
-        print(f"Error: {e}")
+    # Try up to 10 different ports if the default is in use
+    for attempt in range(10):
+        try:
+            with socketserver.TCPServer(("", PORT), ChecklistHandler) as httpd:
+                print(f"Serving at: http://localhost:{PORT}/checklist")
+                print(f"Press Ctrl+C to stop the server")
+                
+                # Open the checklist in the default browser
+                webbrowser.open(f"http://localhost:{PORT}/checklist")
+                
+                # Start the server
+                httpd.serve_forever()
+        except OSError as e:
+            if e.errno == 48:  # Address already in use
+                PORT += 1
+                print(f"Port {PORT-1} is in use, trying port {PORT}...")
+            else:
+                print(f"Error: {e}")
+                sys.exit(1)
+        except KeyboardInterrupt:
+            print("\nServer stopped.")
+            sys.exit(0)
+        except Exception as e:
+            print(f"Error: {e}")
+            sys.exit(1)
+    
+    print(f"Could not find an available port after {attempt+1} attempts.")
+    sys.exit(1)
 
 if __name__ == "__main__":
     main() 
