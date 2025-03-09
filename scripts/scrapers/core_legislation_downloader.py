@@ -26,6 +26,13 @@ class CoreLegislationDownloader:
         
         # Define core legislation to download - gov.za only
         self.core_legislation = {
+            "constitutional": {
+                "Constitution of South Africa": {
+                    "number": "108",
+                    "year": "1996",
+                    "url": "https://www.gov.za/sites/default/files/gcis_document/201409/act108of1996s.pdf"
+                }
+            },
             "commercial": {
                 "Companies Act": {
                     "number": "71",
