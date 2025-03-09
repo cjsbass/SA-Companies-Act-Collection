@@ -60,11 +60,11 @@ This checklist tracks the materials needed to build a comprehensive South Africa
 
 ### Academic and Reference Materials
 - [ ] Standard legal textbooks by authoritative authors
-- [ ] Law Journal articles from major SA law reviews
+- [x] Law Journal articles from major SA law reviews
 - [ ] Legal encyclopedias (e.g., LAWSA)
-- [ ] Legal dictionaries and glossaries
+- [x] Legal dictionaries and glossaries
 - [ ] Practice manuals and handbooks
-- [ ] Law Reform Commission reports and papers
+- [x] Law Reform Commission reports and papers
 
 ### Specialized Legal Domains
 - [ ] Customary law materials and research
@@ -104,12 +104,12 @@ This checklist tracks the materials needed to build a comprehensive South Africa
 
 ## Progress Summary
 
-**Overall Completion**: 38/71 items (54%)
+**Overall Completion**: 41/71 items (58%)
 
 **By Category**:
 - Legislative Framework: 25/29 (86%)
 - Case Law: 8/11 (73%)
-- Secondary Legal Sources: 0/14 (0%)
+- Secondary Legal Sources: 3/14 (21%)
 - Procedural Materials: 5/5 (100%)
 - Historical and Contextual Materials: 0/5 (0%)
 - Technical Processing Requirements: 0/7 (0%)

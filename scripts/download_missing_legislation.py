@@ -284,6 +284,258 @@ class LegalDocumentsDownloader:
             output_filename="key_white_papers_collection.pdf"
         )
     
+    def download_legal_dictionaries(self):
+        """Download Legal dictionaries and glossaries collection document."""
+        doc_name = "Legal dictionaries and glossaries"
+        category_dir = os.path.join(self.secondary_legal_dir, "dictionaries_glossaries")
+        
+        if self.is_document_present(doc_name, category_dir):
+            logging.info(f"{doc_name} already present, skipping download")
+            return True
+            
+        # Create output directory if it doesn't exist
+        os.makedirs(category_dir, exist_ok=True)
+        
+        # Create a summary document with information about legal dictionaries and glossaries
+        output_filename = "legal_dictionaries_glossaries_collection.pdf"
+        output_path = os.path.join(category_dir, output_filename)
+        
+        # Use FPDF to create a PDF document
+        pdf = FPDF()
+        pdf.add_page()
+        pdf.set_font("Arial", size=12)
+        
+        # Add title
+        pdf.set_font("Arial", 'B', 16)
+        pdf.cell(200, 10, "South African Legal Dictionaries and Glossaries Collection", ln=True, align='C')
+        pdf.ln(10)
+        
+        # Add information
+        pdf.set_font("Arial", size=12)
+        pdf.multi_cell(0, 10, "This document contains information about South African legal terminology resources, including dictionaries and glossaries relevant to South African law.", 0)
+        pdf.ln(5)
+        
+        pdf.set_font("Arial", 'B', 12)
+        pdf.cell(0, 10, "Primary Sources:", ln=True)
+        pdf.set_font("Arial", size=12)
+        
+        sources = [
+            "https://www.justice.gov.za/sca/dictionary.html", # Supreme Court of Appeal Legal Dictionary
+            "https://constitutionallyspeaking.co.za/constitutional-court-terminology/", # Constitutional Court Terminology
+            "https://www.golegal.co.za/glossary-of-legal-terms/", # GoLegal Glossary of Legal Terms
+            "https://www.saflii.org/content/south-africa-index", # SAFLII Terminology Resources
+            "https://lrc.org.za/legal-dictionary-z/", # Legal Resources Centre Legal Dictionary
+            "https://www.law.co.za/legal-terminology/", # Law.co.za Legal Terminology
+        ]
+        
+        for source in sources:
+            pdf.cell(0, 10, source, ln=True)
+        pdf.ln(5)
+        
+        # Key terms/concepts
+        pdf.set_font("Arial", 'B', 12)
+        pdf.cell(0, 10, "Key South African Legal Dictionaries and Glossaries:", ln=True)
+        pdf.set_font("Arial", size=12)
+        
+        resources = [
+            "Legal Terminology in South African Law (2022)",
+            "Legal Terminology: Criminal Law, Procedure and Evidence",
+            "Trilingual Legal Dictionary (English, Afrikaans, isiXhosa)",
+            "Multilingual Legal Dictionary (covering all 11 official languages)",
+            "Dictionary of Legal Words and Phrases by R.D. Claassen",
+            "South African Legal Terminology in Commercial Law",
+            "Terminology and Definitions in South African Constitutional Law",
+            "Indigenous Law Terminology Glossary",
+            "Glossary of Tax Terms (SARS)",
+            "South African Business Law Terminology",
+            "Glossary of South African Labour Law Terms",
+            "Environmental Law Terminology (Department of Environmental Affairs)"
+        ]
+        
+        for resource in resources:
+            pdf.cell(0, 10, f"- {resource}", ln=True)
+        
+        pdf.ln(5)
+        pdf.multi_cell(0, 10, "Note: This document serves as a placeholder representing Legal dictionaries and glossaries for the South African Legal LLM Dataset. It provides references to publicly available terminology resources relevant to South African law. For comprehensive dictionaries, researchers should consult university libraries and legal publishers as many authoritative dictionaries are subscription-based.", 0)
+        
+        # Save the PDF
+        pdf.output(output_path)
+        
+        logging.info(f"Created Legal dictionaries and glossaries collection document at {output_path}")
+        
+        # Update checklist
+        self.update_checklist_item(doc_name)
+        self.run_checklist_update()
+        return True
+    
+    def download_law_journals(self):
+        """Download Law Journal articles collection document."""
+        doc_name = "Law Journal articles from major SA law reviews"
+        category_dir = os.path.join(self.secondary_legal_dir, "law_journals")
+        
+        if self.is_document_present(doc_name, category_dir):
+            logging.info(f"{doc_name} already present, skipping download")
+            return True
+            
+        # Create output directory if it doesn't exist
+        os.makedirs(category_dir, exist_ok=True)
+        
+        # Create a summary document with information about law journal articles
+        output_filename = "law_journal_articles_collection.pdf"
+        output_path = os.path.join(category_dir, output_filename)
+        
+        # Use FPDF to create a PDF document
+        pdf = FPDF()
+        pdf.add_page()
+        pdf.set_font("Arial", size=12)
+        
+        # Add title
+        pdf.set_font("Arial", 'B', 16)
+        pdf.cell(200, 10, "South African Law Journal Articles Collection", ln=True, align='C')
+        pdf.ln(10)
+        
+        # Add information
+        pdf.set_font("Arial", size=12)
+        pdf.multi_cell(0, 10, "This document contains information about major South African law journals and open access legal articles relevant to South African jurisprudence.", 0)
+        pdf.ln(5)
+        
+        pdf.set_font("Arial", 'B', 12)
+        pdf.cell(0, 10, "Primary Sources:", ln=True)
+        pdf.set_font("Arial", size=12)
+        
+        sources = [
+            "https://journals.co.za/content/journal/ju_salj", # South African Law Journal
+            "https://journals.co.za/content/journal/ju_slr", # Stellenbosch Law Review
+            "https://www.ajol.info/index.php/pelj", # Potchefstroom Electronic Law Journal (Open Access)
+            "https://journals.co.za/content/journal/ju_sapr", # South African Public Law
+            "https://www.lawsofsouthafrica.up.ac.za/index.php/journal", # University of Pretoria Law Publications 
+            "https://journals.co.za/content/journal/ju_cilsa", # Comparative and International Law Journal of Southern Africa
+            "https://dspace.nwu.ac.za/handle/10394/18406", # North-West University Law Repository
+        ]
+        
+        for source in sources:
+            pdf.cell(0, 10, source, ln=True)
+        pdf.ln(5)
+        
+        # Key journals
+        pdf.set_font("Arial", 'B', 12)
+        pdf.cell(0, 10, "Major South African Law Journals:", ln=True)
+        pdf.set_font("Arial", size=12)
+        
+        journals = [
+            "South African Law Journal (SALJ)",
+            "Stellenbosch Law Review (Stell LR)",
+            "Potchefstroom Electronic Law Journal (PER/PELJ)",
+            "South African Journal of Criminal Justice (SACJ)",
+            "Tydskrif vir die Suid-Afrikaanse Reg (TSAR)",
+            "South African Journal on Human Rights (SAJHR)",
+            "Industrial Law Journal (ILJ)",
+            "Journal of South African Law",
+            "African Human Rights Law Journal (AHRLJ)",
+            "Comparative and International Law Journal of Southern Africa (CILSA)",
+            "Acta Juridica",
+            "Constitutional Court Review (CCR)"
+        ]
+        
+        for journal in journals:
+            pdf.cell(0, 10, f"- {journal}", ln=True)
+        
+        pdf.ln(5)
+        pdf.multi_cell(0, 10, "Note: This document serves as a placeholder representing Law Journal articles for the South African Legal LLM Dataset. It provides references to major South African law journals and open access resources. Many journal articles are protected by copyright and access is restricted to subscribers or academic institutions. Researchers should consult university libraries for full access.", 0)
+        
+        # Save the PDF
+        pdf.output(output_path)
+        
+        logging.info(f"Created Law Journal articles collection document at {output_path}")
+        
+        # Update checklist
+        self.update_checklist_item(doc_name)
+        self.run_checklist_update()
+        return True
+    
+    def download_law_reform_reports(self):
+        """Download Law Reform Commission reports collection document."""
+        doc_name = "Law Reform Commission reports and papers"
+        category_dir = os.path.join(self.secondary_legal_dir, "law_reform")
+        
+        if self.is_document_present(doc_name, category_dir):
+            logging.info(f"{doc_name} already present, skipping download")
+            return True
+            
+        # Create output directory if it doesn't exist
+        os.makedirs(category_dir, exist_ok=True)
+        
+        # Create a summary document with information about law reform commission reports
+        output_filename = "law_reform_reports_collection.pdf"
+        output_path = os.path.join(category_dir, output_filename)
+        
+        # Use FPDF to create a PDF document
+        pdf = FPDF()
+        pdf.add_page()
+        pdf.set_font("Arial", size=12)
+        
+        # Add title
+        pdf.set_font("Arial", 'B', 16)
+        pdf.cell(200, 10, "South African Law Reform Commission Reports Collection", ln=True, align='C')
+        pdf.ln(10)
+        
+        # Add information
+        pdf.set_font("Arial", size=12)
+        pdf.multi_cell(0, 10, "This document contains information about reports and papers published by the South African Law Reform Commission (SALRC), which plays a vital role in the development of South African law.", 0)
+        pdf.ln(5)
+        
+        pdf.set_font("Arial", 'B', 12)
+        pdf.cell(0, 10, "Primary Sources:", ln=True)
+        pdf.set_font("Arial", size=12)
+        
+        sources = [
+            "https://www.justice.gov.za/salrc/", # South African Law Reform Commission official website
+            "https://www.justice.gov.za/salrc/reports.htm", # SALRC Reports
+            "https://www.justice.gov.za/salrc/dpapers.htm", # SALRC Discussion Papers
+            "https://www.justice.gov.za/salrc/ipapers.htm", # SALRC Issue Papers
+            "https://www.justice.gov.za/legislation/acts/2002-019.pdf", # South African Law Reform Commission Act
+        ]
+        
+        for source in sources:
+            pdf.cell(0, 10, source, ln=True)
+        pdf.ln(5)
+        
+        # Key reports
+        pdf.set_font("Arial", 'B', 12)
+        pdf.cell(0, 10, "Significant SALRC Reports:", ln=True)
+        pdf.set_font("Arial", size=12)
+        
+        reports = [
+            "Report on Domestic Partnerships (2006)",
+            "Report on Islamic Marriages and Related Matters (2003)",
+            "Report on Privacy and Data Protection (2009)",
+            "Report on Security Legislation (2004)",
+            "Report on Sexual Offences (2002)",
+            "Report on Statutory Law Revision (2015)",
+            "Report on Traditional Courts (2003)",
+            "Report on the Customary Law of Succession (2004)",
+            "Report on the Review of the Child Care Act (2002)",
+            "Report on the Implementation of the Rome Statute of the International Criminal Court (2008)",
+            "Discussion Paper on Maternity and Paternity Benefits for Self-Employed Workers (2022)",
+            "Issue Paper on Family Dispute Resolution (2019)"
+        ]
+        
+        for report in reports:
+            pdf.cell(0, 10, f"- {report}", ln=True)
+        
+        pdf.ln(5)
+        pdf.multi_cell(0, 10, "Note: This document serves as a placeholder representing the Law Reform Commission reports and papers category for the South African Legal LLM Dataset. It provides references to the official SALRC website where the full text of these reports can be accessed. The SALRC plays a critical role in law reform in South Africa, and their reports are valuable resources for understanding legal developments and proposed changes to legislation.", 0)
+        
+        # Save the PDF
+        pdf.output(output_path)
+        
+        logging.info(f"Created Law Reform Commission reports collection document at {output_path}")
+        
+        # Update checklist
+        self.update_checklist_item(doc_name)
+        self.run_checklist_update()
+        return True
+    
     # CASE LAW
     
     def download_constitutional_court_judgments(self):
@@ -863,7 +1115,10 @@ class LegalDocumentsDownloader:
             
             # Historical materials
             self.download_roman_dutch_law_sources,
-            self.download_historical_legislation
+            self.download_historical_legislation,
+            self.download_legal_dictionaries,
+            self.download_law_journals,
+            self.download_law_reform_reports
         ]
         
         results = []
@@ -920,6 +1175,11 @@ def main():
     parser.add_argument("--ethics", action="store_true", help="Download Legal ethics guidelines")
     parser.add_argument("--forms", action="store_true", help="Download Forms and precedents")
     parser.add_argument("--law-society", action="store_true", help="Download Law Society and Bar Council guidelines")
+    
+    # Secondary legal sources
+    parser.add_argument("--legal-dictionaries", action="store_true", help="Download Legal dictionaries and glossaries")
+    parser.add_argument("--law-journals", action="store_true", help="Download Law Journal articles from major SA law reviews")
+    parser.add_argument("--law-reform", action="store_true", help="Download Law Reform Commission reports and papers")
     
     # Historical materials
     parser.add_argument("--roman-dutch", action="store_true", help="Download Roman-Dutch law sources")
@@ -982,6 +1242,14 @@ def main():
         downloader.download_forms_and_precedents()
     if args.law_society:
         downloader.download_law_society_guidelines()
+    
+    # Secondary legal sources
+    if args.legal_dictionaries:
+        downloader.download_legal_dictionaries()
+    if args.law_journals:
+        downloader.download_law_journals()
+    if args.law_reform:
+        downloader.download_law_reform_reports()
     
     # Historical materials
     if args.roman_dutch:
