@@ -4,4 +4,5 @@ python-dateutil==2.9.0
 tqdm==4.66.1
 pathlib==1.0.1
 psutil==5.9.5
+fpdf==1.7.2
 windows-curses==2.3.2; platform_system == "Windows" 

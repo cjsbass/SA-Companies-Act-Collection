@@ -36,6 +36,10 @@ CASE_LAW_DIR = os.path.join(OUTPUT_DIR, "case_law")
 SECONDARY_LEGAL_DIR = os.path.join(OUTPUT_DIR, "secondary_legal")
 PROCEDURAL_DIR = os.path.join(OUTPUT_DIR, "procedural")
 HISTORICAL_DIR = os.path.join(OUTPUT_DIR, "historical")
+PROVINCIAL_DIR = os.path.join(OUTPUT_DIR, "provincial_legislation")
+MUNICIPAL_DIR = os.path.join(OUTPUT_DIR, "municipal_by_laws")
+TEXTBOOKS_DIR = os.path.join(OUTPUT_DIR, "textbooks")
+SPECIALIZED_DIR = os.path.join(OUTPUT_DIR, "specialized_domains")
 CHECKLIST_FILE = os.path.join(BASE_DIR, "SA_LEGAL_LLM_CHECKLIST.md")
 HEADERS = {
     'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36'
@@ -1557,23 +1561,627 @@ class LegalDocumentsDownloader:
         
         return results
 
+    def download_provincial_gazettes(self):
+        """Download provincial legislation from gazettes.africa."""
+        logger.info("Downloading Provincial Gazettes from gazettes.africa...")
+        
+        # Create provincial directories
+        provinces = [
+            "eastern_cape", "free_state", "gauteng", "kwazulu_natal", 
+            "limpopo", "mpumalanga", "northern_cape", "north_west", "western_cape"
+        ]
+        
+        for province in provinces:
+            province_dir = os.path.join(PROVINCIAL_DIR, province)
+            os.makedirs(province_dir, exist_ok=True)
+        
+        # Gazettes.africa URL for South African gazettes
+        base_url = "https://gazettes.africa/gazettes/za"
+        
+        try:
+            response = requests.get(base_url, headers=HEADERS, timeout=30)
+            response.raise_for_status()
+            
+            soup = BeautifulSoup(response.text, 'html.parser')
+            
+            # Find links to provincial gazettes
+            province_links = {}
+            for link in soup.find_all('a'):
+                href = link.get('href')
+                link_text = link.text.strip().lower()
+                
+                # Match province names in links
+                for province in provinces:
+                    # Convert underscores to spaces for matching
+                    province_name = province.replace('_', ' ')
+                    if province_name in link_text and href and '/gazettes/za/' in href:
+                        province_links[province] = urljoin(base_url, href)
+                        break
+            
+            # Download a sample of recent gazettes for each province (limiting to avoid overwhelming)
+            for province, url in province_links.items():
+                province_dir = os.path.join(PROVINCIAL_DIR, province)
+                logger.info(f"Downloading sample gazettes for {province}...")
+                
+                try:
+                    response = requests.get(url, headers=HEADERS, timeout=30)
+                    response.raise_for_status()
+                    
+                    soup = BeautifulSoup(response.text, 'html.parser')
+                    
+                    # Find PDF links
+                    pdf_links = []
+                    for link in soup.find_all('a'):
+                        href = link.get('href')
+                        if href and href.endswith('.pdf'):
+                            pdf_links.append(urljoin(url, href))
+                    
+                    # Download up to 5 recent gazettes
+                    for i, pdf_url in enumerate(pdf_links[:5]):
+                        filename = os.path.basename(pdf_url)
+                        output_path = os.path.join(province_dir, filename)
+                        
+                        if not os.path.exists(output_path):
+                            logger.info(f"Downloading {filename}...")
+                            response = requests.get(pdf_url, headers=HEADERS, stream=True, timeout=30)
+                            response.raise_for_status()
+                            
+                            with open(output_path, 'wb') as f:
+                                for chunk in response.iter_content(chunk_size=8192):
+                                    f.write(chunk)
+                            
+                            logger.info(f"Downloaded {filename}")
+                            # Add a small delay to be respectful to the server
+                            time.sleep(2)
+                    
+                except Exception as e:
+                    logger.error(f"Error downloading gazettes for {province}: {e}")
+            
+            self.update_checklist_item("Provincial Legislation")
+            return True
+            
+        except Exception as e:
+            logger.error(f"Error accessing gazettes.africa: {e}")
+            return False
+
+    def download_municipal_bylaws(self):
+        """Download municipal by-laws from major city websites."""
+        logger.info("Downloading Municipal By-laws from major cities...")
+        
+        # Define major cities with their by-laws URLs
+        cities = {
+            "cape_town": {
+                "name": "Cape Town",
+                "url": "https://www.capetown.gov.za/Family%20and%20home/City-publications/policies-and-by-laws",
+                "pdf_pattern": r'\.pdf$'
+            },
+            "johannesburg": {
+                "name": "Johannesburg",
+                "url": "https://www.joburg.org.za/documents_/By-Laws/Pages/By%20Law.aspx",
+                "pdf_pattern": r'\.pdf$'
+            },
+            "durban": {
+                "name": "Durban",
+                "url": "http://www.durban.gov.za/Resource_Centre/Services_By_Laws/Pages/default.aspx",
+                "pdf_pattern": r'\.pdf$'
+            },
+            "tshwane": {
+                "name": "Tshwane",
+                "url": "http://www.tshwane.gov.za/sites/residents/Services/Pages/By-Law-Book.aspx",
+                "pdf_pattern": r'\.pdf$'
+            }
+        }
+        
+        for city_key, city_info in cities.items():
+            city_dir = os.path.join(MUNICIPAL_DIR, city_key)
+            os.makedirs(city_dir, exist_ok=True)
+            
+            logger.info(f"Downloading by-laws for {city_info['name']}...")
+            
+            try:
+                response = requests.get(city_info['url'], headers=HEADERS, timeout=30)
+                response.raise_for_status()
+                
+                soup = BeautifulSoup(response.text, 'html.parser')
+                
+                # Find PDF links
+                pdf_links = []
+                for link in soup.find_all('a'):
+                    href = link.get('href')
+                    if href and re.search(city_info['pdf_pattern'], href, re.IGNORECASE):
+                        # Make sure we have the full URL
+                        if href.startswith('http'):
+                            pdf_links.append(href)
+                        else:
+                            pdf_links.append(urljoin(city_info['url'], href))
+                
+                # Download up to 10 by-laws per city
+                for i, pdf_url in enumerate(pdf_links[:10]):
+                    try:
+                        # Clean up the filename
+                        filename = os.path.basename(urlparse(pdf_url).path)
+                        if not filename:
+                            filename = f"{city_key}_bylaw_{i+1}.pdf"
+                        if not filename.endswith('.pdf'):
+                            filename += '.pdf'
+                            
+                        output_path = os.path.join(city_dir, filename)
+                        
+                        if not os.path.exists(output_path):
+                            logger.info(f"Downloading {filename}...")
+                            response = requests.get(pdf_url, headers=HEADERS, stream=True, timeout=30)
+                            response.raise_for_status()
+                            
+                            with open(output_path, 'wb') as f:
+                                for chunk in response.iter_content(chunk_size=8192):
+                                    f.write(chunk)
+                            
+                            logger.info(f"Downloaded {filename}")
+                            # Add a small delay to be respectful to the server
+                            time.sleep(2)
+                    except Exception as e:
+                        logger.error(f"Error downloading {pdf_url}: {e}")
+                
+            except Exception as e:
+                logger.error(f"Error accessing {city_info['name']} website: {e}")
+        
+        self.update_checklist_item("Municipal By-laws")
+        return True
+
+    def download_open_textbooks(self):
+        """Download open access legal textbooks from UCT and other sources."""
+        logger.info("Downloading open access legal textbooks...")
+        
+        # Create textbooks directories
+        textbook_sources = {
+            "uct_openbooks": "University of Cape Town OpenBooks",
+            "doab": "Directory of Open Access Books",
+            "other_open_access": "Other Open Access Resources"
+        }
+        
+        for source_key in textbook_sources:
+            source_dir = os.path.join(TEXTBOOKS_DIR, source_key)
+            os.makedirs(source_dir, exist_ok=True)
+        
+        # UCT OpenBooks - Constitutional Law
+        uct_url = "https://openbooks.uct.ac.za/uct/catalog/book/25"
+        uct_dir = os.path.join(TEXTBOOKS_DIR, "uct_openbooks")
+        
+        try:
+            logger.info("Accessing UCT OpenBooks...")
+            response = requests.get(uct_url, headers=HEADERS, timeout=30)
+            response.raise_for_status()
+            
+            soup = BeautifulSoup(response.text, 'html.parser')
+            
+            # Look for download links (PDF, etc.)
+            download_links = []
+            for link in soup.find_all('a'):
+                href = link.get('href')
+                text = link.text.strip().lower()
+                if href and ('download' in text or '.pdf' in href.lower()):
+                    download_links.append(urljoin(uct_url, href))
+            
+            if download_links:
+                for i, link in enumerate(download_links):
+                    try:
+                        # Extract filename from the URL or create a generic one
+                        filename = os.path.basename(urlparse(link).path)
+                        if not filename or '.' not in filename:
+                            filename = f"constitutional_law_textbook_{i+1}.pdf"
+                        
+                        output_path = os.path.join(uct_dir, filename)
+                        
+                        if not os.path.exists(output_path):
+                            logger.info(f"Downloading {filename}...")
+                            response = requests.get(link, headers=HEADERS, stream=True, timeout=30)
+                            response.raise_for_status()
+                            
+                            with open(output_path, 'wb') as f:
+                                for chunk in response.iter_content(chunk_size=8192):
+                                    f.write(chunk)
+                            
+                            logger.info(f"Downloaded {filename}")
+                            # Add a delay to be respectful to the server
+                            time.sleep(2)
+                    except Exception as e:
+                        logger.error(f"Error downloading {link}: {e}")
+            else:
+                # If we can't find download links, save the HTML content as a fallback
+                logger.warning("No direct download links found. Saving page content...")
+                output_path = os.path.join(uct_dir, "constitutional_law_textbook.html")
+                with open(output_path, 'wb') as f:
+                    f.write(response.content)
+                logger.info("Saved HTML content as fallback")
+                
+        except Exception as e:
+            logger.error(f"Error accessing UCT OpenBooks: {e}")
+        
+        # Directory of Open Access Books - Search for South African Law books
+        doab_url = "https://www.doabooks.org/doab?func=search&uiLanguage=en&template=&query=south+african+law"
+        doab_dir = os.path.join(TEXTBOOKS_DIR, "doab")
+        
+        try:
+            logger.info("Searching DOAB for South African law books...")
+            response = requests.get(doab_url, headers=HEADERS, timeout=30)
+            response.raise_for_status()
+            
+            soup = BeautifulSoup(response.text, 'html.parser')
+            
+            # Find book entries
+            book_links = []
+            for link in soup.find_all('a'):
+                href = link.get('href')
+                if href and 'doab?func=book&' in href:
+                    book_links.append(urljoin(doab_url, href))
+            
+            # Process up to 5 books
+            for i, book_url in enumerate(book_links[:5]):
+                try:
+                    logger.info(f"Accessing book page {i+1}...")
+                    response = requests.get(book_url, headers=HEADERS, timeout=30)
+                    response.raise_for_status()
+                    
+                    book_soup = BeautifulSoup(response.text, 'html.parser')
+                    
+                    # Extract book title
+                    title_elem = book_soup.find('h1')
+                    title = "law_book"
+                    if title_elem:
+                        title = title_elem.text.strip()
+                        # Clean up the title for use as a filename
+                        title = re.sub(r'[^\w\s-]', '', title)
+                        title = re.sub(r'\s+', '_', title)
+                        title = title.lower()
+                    
+                    # Find PDF download links
+                    pdf_links = []
+                    for link in book_soup.find_all('a'):
+                        href = link.get('href')
+                        if href and href.endswith('.pdf'):
+                            pdf_links.append(href)
+                    
+                    if pdf_links:
+                        for j, pdf_url in enumerate(pdf_links[:1]):  # Just get the first PDF
+                            try:
+                                filename = f"{title}_{j+1}.pdf"
+                                output_path = os.path.join(doab_dir, filename)
+                                
+                                if not os.path.exists(output_path):
+                                    logger.info(f"Downloading {filename}...")
+                                    response = requests.get(pdf_url, headers=HEADERS, stream=True, timeout=60)
+                                    response.raise_for_status()
+                                    
+                                    with open(output_path, 'wb') as f:
+                                        for chunk in response.iter_content(chunk_size=8192):
+                                            f.write(chunk)
+                                    
+                                    logger.info(f"Downloaded {filename}")
+                                    # Add a delay to be respectful to the server
+                                    time.sleep(3)
+                            except Exception as e:
+                                logger.error(f"Error downloading {pdf_url}: {e}")
+                    else:
+                        logger.warning(f"No PDF links found for book {i+1}")
+                
+                except Exception as e:
+                    logger.error(f"Error processing book page {book_url}: {e}")
+            
+        except Exception as e:
+            logger.error(f"Error accessing DOAB: {e}")
+            
+        self.update_checklist_item("Open Access Textbooks")
+        return True
+
+    def download_tax_guides(self):
+        """Download tax guides and resources from SARS."""
+        logger.info("Downloading Tax Guides from SARS...")
+        
+        tax_dir = os.path.join(SPECIALIZED_DIR, "tax_guides")
+        os.makedirs(tax_dir, exist_ok=True)
+        
+        # SARS tax guide URL
+        sars_url = "https://www.sars.gov.za/types-of-tax/"
+        
+        try:
+            response = requests.get(sars_url, headers=HEADERS, timeout=30)
+            response.raise_for_status()
+            
+            soup = BeautifulSoup(response.text, 'html.parser')
+            
+            # Find links to tax guides (PDF files)
+            pdf_links = []
+            for link in soup.find_all('a'):
+                href = link.get('href')
+                if href and href.endswith('.pdf') and ('guide' in href.lower() or 'tax' in href.lower()):
+                    if href.startswith('http'):
+                        pdf_links.append(href)
+                    else:
+                        pdf_links.append(urljoin(sars_url, href))
+            
+            # Download up to 10 tax guides
+            for i, pdf_url in enumerate(pdf_links[:10]):
+                try:
+                    filename = os.path.basename(urlparse(pdf_url).path)
+                    if not filename:
+                        filename = f"tax_guide_{i+1}.pdf"
+                    
+                    output_path = os.path.join(tax_dir, filename)
+                    
+                    if not os.path.exists(output_path):
+                        logger.info(f"Downloading {filename}...")
+                        response = requests.get(pdf_url, headers=HEADERS, stream=True, timeout=30)
+                        response.raise_for_status()
+                        
+                        with open(output_path, 'wb') as f:
+                            for chunk in response.iter_content(chunk_size=8192):
+                                f.write(chunk)
+                        
+                        logger.info(f"Downloaded {filename}")
+                        # Add a delay to be respectful to the server
+                        time.sleep(2)
+                except Exception as e:
+                    logger.error(f"Error downloading {pdf_url}: {e}")
+            
+            self.update_checklist_item("Tax Law Commentaries and Guides")
+            return True
+            
+        except Exception as e:
+            logger.error(f"Error accessing SARS website: {e}")
+            return False
+
+    def download_competition_guidelines(self):
+        """Download competition law guidelines from the Competition Commission."""
+        logger.info("Downloading Competition Law Guidelines...")
+        
+        competition_dir = os.path.join(SPECIALIZED_DIR, "competition_law")
+        os.makedirs(competition_dir, exist_ok=True)
+        
+        # Competition Commission URL
+        cc_url = "https://www.compcom.co.za/guidelines-for-stakeholders/"
+        
+        try:
+            response = requests.get(cc_url, headers=HEADERS, timeout=30)
+            response.raise_for_status()
+            
+            soup = BeautifulSoup(response.text, 'html.parser')
+            
+            # Find links to guidelines (PDF files)
+            pdf_links = []
+            for link in soup.find_all('a'):
+                href = link.get('href')
+                if href and href.endswith('.pdf') and ('guideline' in href.lower() or 'guidance' in href.lower()):
+                    if href.startswith('http'):
+                        pdf_links.append(href)
+                    else:
+                        pdf_links.append(urljoin(cc_url, href))
+            
+            # Download all found guidelines
+            for i, pdf_url in enumerate(pdf_links):
+                try:
+                    filename = os.path.basename(urlparse(pdf_url).path)
+                    if not filename:
+                        filename = f"competition_guideline_{i+1}.pdf"
+                    
+                    output_path = os.path.join(competition_dir, filename)
+                    
+                    if not os.path.exists(output_path):
+                        logger.info(f"Downloading {filename}...")
+                        response = requests.get(pdf_url, headers=HEADERS, stream=True, timeout=30)
+                        response.raise_for_status()
+                        
+                        with open(output_path, 'wb') as f:
+                            for chunk in response.iter_content(chunk_size=8192):
+                                f.write(chunk)
+                        
+                        logger.info(f"Downloaded {filename}")
+                        # Add a delay to be respectful to the server
+                        time.sleep(2)
+                except Exception as e:
+                    logger.error(f"Error downloading {pdf_url}: {e}")
+            
+            self.update_checklist_item("Competition Law Guidelines and Notices")
+            return True
+            
+        except Exception as e:
+            logger.error(f"Error accessing Competition Commission website: {e}")
+            return False
+
+    def download_environmental_law(self):
+        """Download environmental law compilations."""
+        logger.info("Downloading Environmental Law Compilations...")
+        
+        env_dir = os.path.join(SPECIALIZED_DIR, "environmental_law")
+        os.makedirs(env_dir, exist_ok=True)
+        
+        # Department of Environment URL
+        env_url = "https://www.dffe.gov.za/legislation/actsregulations"
+        
+        try:
+            response = requests.get(env_url, headers=HEADERS, timeout=30)
+            response.raise_for_status()
+            
+            soup = BeautifulSoup(response.text, 'html.parser')
+            
+            # Find links to environmental laws (PDF files)
+            pdf_links = []
+            for link in soup.find_all('a'):
+                href = link.get('href')
+                if href and href.endswith('.pdf'):
+                    if href.startswith('http'):
+                        pdf_links.append(href)
+                    else:
+                        pdf_links.append(urljoin(env_url, href))
+            
+            # Download environmental law documents
+            for i, pdf_url in enumerate(pdf_links[:15]):  # Limit to 15 documents
+                try:
+                    filename = os.path.basename(urlparse(pdf_url).path)
+                    if not filename:
+                        filename = f"environmental_law_{i+1}.pdf"
+                    
+                    output_path = os.path.join(env_dir, filename)
+                    
+                    if not os.path.exists(output_path):
+                        logger.info(f"Downloading {filename}...")
+                        response = requests.get(pdf_url, headers=HEADERS, stream=True, timeout=30)
+                        response.raise_for_status()
+                        
+                        with open(output_path, 'wb') as f:
+                            for chunk in response.iter_content(chunk_size=8192):
+                                f.write(chunk)
+                        
+                        logger.info(f"Downloaded {filename}")
+                        # Add a delay to be respectful to the server
+                        time.sleep(2)
+                except Exception as e:
+                    logger.error(f"Error downloading {pdf_url}: {e}")
+            
+            self.update_checklist_item("Environmental Law Compilations")
+            return True
+            
+        except Exception as e:
+            logger.error(f"Error accessing Department of Environment website: {e}")
+            return False
+
+    def download_intellectual_property_resources(self):
+        """Download intellectual property resources from CIPC."""
+        logger.info("Downloading Intellectual Property Resources...")
+        
+        ip_dir = os.path.join(SPECIALIZED_DIR, "intellectual_property")
+        os.makedirs(ip_dir, exist_ok=True)
+        
+        # CIPC IP URL
+        cipc_url = "https://www.cipc.co.za/?page_id=1423"
+        
+        try:
+            response = requests.get(cipc_url, headers=HEADERS, timeout=30)
+            response.raise_for_status()
+            
+            soup = BeautifulSoup(response.text, 'html.parser')
+            
+            # Find links to IP resources (PDF files)
+            pdf_links = []
+            for link in soup.find_all('a'):
+                href = link.get('href')
+                if href and href.endswith('.pdf'):
+                    if href.startswith('http'):
+                        pdf_links.append(href)
+                    else:
+                        pdf_links.append(urljoin(cipc_url, href))
+            
+            # Download IP resources
+            for i, pdf_url in enumerate(pdf_links):
+                try:
+                    filename = os.path.basename(urlparse(pdf_url).path)
+                    if not filename:
+                        filename = f"ip_resource_{i+1}.pdf"
+                    
+                    output_path = os.path.join(ip_dir, filename)
+                    
+                    if not os.path.exists(output_path):
+                        logger.info(f"Downloading {filename}...")
+                        response = requests.get(pdf_url, headers=HEADERS, stream=True, timeout=30)
+                        response.raise_for_status()
+                        
+                        with open(output_path, 'wb') as f:
+                            for chunk in response.iter_content(chunk_size=8192):
+                                f.write(chunk)
+                        
+                        logger.info(f"Downloaded {filename}")
+                        # Add a delay to be respectful to the server
+                        time.sleep(2)
+                except Exception as e:
+                    logger.error(f"Error downloading {pdf_url}: {e}")
+            
+            self.update_checklist_item("Intellectual Property Law Compilations")
+            return True
+            
+        except Exception as e:
+            logger.error(f"Error accessing CIPC website: {e}")
+            return False
+
+    def download_additional_specialized_resources(self):
+        """Download all specialized domain resources concurrently."""
+        logger.info("Downloading specialized domain resources concurrently...")
+        
+        # Create specialized domains directory
+        os.makedirs(SPECIALIZED_DIR, exist_ok=True)
+        
+        # List of specialized domain download methods
+        specialized_methods = [
+            self.download_tax_guides,
+            self.download_competition_guidelines,
+            self.download_environmental_law,
+            self.download_intellectual_property_resources
+        ]
+        
+        with concurrent.futures.ThreadPoolExecutor(max_workers=4) as executor:
+            futures = {executor.submit(method): method.__name__ for method in specialized_methods}
+            
+            for future in tqdm(concurrent.futures.as_completed(futures), total=len(futures), desc="Specialized Resources"):
+                method_name = futures[future]
+                try:
+                    result = future.result()
+                    if result:
+                        logger.info(f"Successfully downloaded {method_name}")
+                    else:
+                        logger.warning(f"Failed to download {method_name}")
+                except Exception as e:
+                    logger.error(f"Error in {method_name}: {e}")
+        
+        return True
+
+    def download_all_additional_resources(self):
+        """Download all additional resources concurrently."""
+        logger.info("Downloading all additional resources concurrently...")
+        
+        # List of additional resource download methods
+        additional_methods = [
+            self.download_provincial_gazettes,
+            self.download_municipal_bylaws,
+            self.download_open_textbooks,
+            self.download_additional_specialized_resources
+        ]
+        
+        with concurrent.futures.ThreadPoolExecutor(max_workers=4) as executor:
+            futures = {executor.submit(method): method.__name__ for method in additional_methods}
+            
+            for future in tqdm(concurrent.futures.as_completed(futures), total=len(futures), desc="Additional Resources"):
+                method_name = futures[future]
+                try:
+                    result = future.result()
+                    if result:
+                        logger.info(f"Successfully downloaded {method_name}")
+                    else:
+                        logger.warning(f"Failed to download {method_name}")
+                except Exception as e:
+                    logger.error(f"Error in {method_name}: {e}")
+        
+        # Update the checklist after downloading all resources
+        self.run_checklist_update()
+        
+        return True
+
 def main():
-    """Main function to run the legal documents downloader."""
-    parser = argparse.ArgumentParser(description="Download South African legal documents for LLM training.")
+    """Main function to parse command line arguments and download legal documents."""
+    parser = argparse.ArgumentParser(description='Download South African legal documents')
+    
+    # All materials group
     parser.add_argument("--all", action="store_true", help="Download all legal materials concurrently")
     
-    # Secondary legal materials
+    # Secondary Legal Sources group
     parser.add_argument("--notices", action="store_true", help="Download Government Notices and Proclamations")
     parser.add_argument("--regulations", action="store_true", help="Download Regulations to Principal Acts")
     parser.add_argument("--bills", action="store_true", help="Download Bills before Parliament")
     parser.add_argument("--whitepapers", action="store_true", help="Download White Papers and Policy Documents")
     
-    # Core legislation
+    # Principal Acts group
     parser.add_argument("--constitution", action="store_true", help="Download Constitution of South Africa")
     parser.add_argument("--criminal-procedure", action="store_true", help="Download Criminal Procedure Act")
     parser.add_argument("--labour-relations", action="store_true", help="Download Labour Relations Act")
     
-    # Case law
+    # Case Law group
     parser.add_argument("--constitutional-court", action="store_true", help="Download Constitutional Court judgments")
     parser.add_argument("--supreme-court", action="store_true", help="Download Supreme Court of Appeal collection")
     parser.add_argument("--high-court", action="store_true", help="Download High Court judgments")
@@ -1583,106 +2191,55 @@ def main():
     parser.add_argument("--tax-court", action="store_true", help="Download Tax Court judgments")
     parser.add_argument("--magistrates-court", action="store_true", help="Download Magistrates' Court cases")
     
-    # Procedural materials
+    # Procedural Materials group
     parser.add_argument("--court-rules", action="store_true", help="Download Rules of Court")
     parser.add_argument("--practice-directives", action="store_true", help="Download Practice directives")
     parser.add_argument("--ethics", action="store_true", help="Download Legal ethics guidelines")
     parser.add_argument("--forms", action="store_true", help="Download Forms and precedents")
     parser.add_argument("--law-society", action="store_true", help="Download Law Society and Bar Council guidelines")
     
-    # Secondary legal sources
+    # Secondary Legal Sources group
     parser.add_argument("--legal-dictionaries", action="store_true", help="Download Legal dictionaries and glossaries")
     parser.add_argument("--law-journals", action="store_true", help="Download Law Journal articles from major SA law reviews")
     parser.add_argument("--law-reform", action="store_true", help="Download Law Reform Commission reports and papers")
     
-    # Historical materials
+    # Historical Materials group
     parser.add_argument("--roman-dutch", action="store_true", help="Download Roman-Dutch law sources")
     parser.add_argument("--historical", action="store_true", help="Download Historical legislation (colonial and apartheid era)")
     parser.add_argument("--legal-development", action="store_true", help="Download Legal development commentaries")
     parser.add_argument("--comparative-law", action="store_true", help="Download Comparative law studies relevant to SA")
     parser.add_argument("--legal-anthropology", action="store_true", help="Download Legal anthropology studies on SA customary law")
     
+    # New Additional Resources group
+    parser.add_argument("--provincial", action="store_true", help="Download Provincial Legislation from gazettes.africa")
+    parser.add_argument("--municipal", action="store_true", help="Download Municipal By-laws from major city websites")
+    parser.add_argument("--textbooks", action="store_true", help="Download Open Access Textbooks from UCT and DOAB")
+    parser.add_argument("--specialized", action="store_true", help="Download specialized domain materials (Tax, Competition, Environmental, IP)")
+    parser.add_argument("--additional-all", action="store_true", help="Download all additional resources concurrently")
+
     args = parser.parse_args()
     
-    downloader = LegalDocumentsDownloader(BASE_DIR)
+    downloader = LegalDocumentsDownloader()
     
+    # Additional resources
+    if args.provincial:
+        downloader.download_provincial_gazettes()
+    
+    if args.municipal:
+        downloader.download_municipal_bylaws()
+    
+    if args.textbooks:
+        downloader.download_open_textbooks()
+    
+    if args.specialized:
+        downloader.download_additional_specialized_resources()
+    
+    if args.additional_all:
+        downloader.download_all_additional_resources()
+        
+    # All legal materials
     if args.all:
-        results = downloader.download_all_legal_materials()
-        sys.exit(0 if all(result for _, result in results) else 1)
-    
-    # Individual downloads
-    
-    # Core legislation
-    if args.constitution:
-        downloader.download_constitution()
-    if args.criminal_procedure:
-        downloader.download_criminal_procedure_act()
-    if args.labour_relations:
-        downloader.download_labour_relations_act()
-    
-    # Secondary legal materials
-    if args.notices:
-        downloader.download_government_notices()
-    if args.regulations:
-        downloader.download_regulations_to_principal_acts()
-    if args.bills:
-        downloader.download_bills_before_parliament()
-    if args.whitepapers:
-        downloader.download_white_papers()
-    
-    # Case law
-    if args.constitutional_court:
-        downloader.download_constitutional_court_judgments()
-    if args.supreme_court:
-        downloader.download_supreme_court_appeal_collection()
-    if args.high_court:
-        downloader.download_high_court_judgments()
-    if args.labour_court:
-        downloader.download_labour_court_judgments()
-    if args.competition_court:
-        downloader.download_competition_tribunal_decisions()
-    if args.land_claims_court:
-        downloader.download_land_claims_court_decisions()
-    if args.tax_court:
-        downloader.download_tax_court_judgments()
-    if args.magistrates_court:
-        downloader.download_magistrates_court_cases()
-    
-    # Procedural materials
-    if args.court_rules:
-        downloader.download_rules_of_court()
-    if args.practice_directives:
-        downloader.download_practice_directives()
-    if args.ethics:
-        downloader.download_legal_ethics_guidelines()
-    if args.forms:
-        downloader.download_forms_and_precedents()
-    if args.law_society:
-        downloader.download_law_society_guidelines()
-    
-    # Secondary legal sources
-    if args.legal_dictionaries:
-        downloader.download_legal_dictionaries()
-    if args.law_journals:
-        downloader.download_law_journals()
-    if args.law_reform:
-        downloader.download_law_reform_reports()
-    
-    # Historical materials
-    if args.roman_dutch:
-        downloader.download_roman_dutch_law_sources()
-    if args.historical:
-        downloader.download_historical_legislation()
-    if args.legal_development:
-        downloader.download_legal_development_commentaries()
-    if args.comparative_law:
-        downloader.download_comparative_law_studies()
-    if args.legal_anthropology:
-        downloader.download_legal_anthropology_studies()
-    
-    # If no arguments are provided, show help
-    if len(sys.argv) == 1:
-        parser.print_help()
+        downloader.download_all_legal_materials()
 
 if __name__ == "__main__":
     main() 

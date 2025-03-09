@@ -36,8 +36,8 @@ This checklist tracks the materials needed to build a comprehensive South Africa
 - [x] Regulations to Principal Acts
 - [x] Bills before Parliament
 - [x] White Papers and Policy Documents
-- [ ] Provincial legislation
-- [ ] Municipal by-laws (major cities)
+- [x] Provincial legislation (gazettes.africa)
+- [x] Municipal by-laws (major cities)
 
 ## Case Law
 
@@ -65,16 +65,17 @@ This checklist tracks the materials needed to build a comprehensive South Africa
 - [x] Legal dictionaries and glossaries
 - [ ] Practice manuals and handbooks
 - [x] Law Reform Commission reports and papers
+- [x] Open access textbooks (UCT OpenBooks, DOAB)
 
 ### Specialized Legal Domains
 - [ ] Customary law materials and research
-- [ ] Environmental law compilations
-- [ ] Tax law commentaries and guides
+- [x] Environmental law compilations (DFFE)
+- [x] Tax law commentaries and guides (SARS)
 - [ ] Maritime law texts
 - [ ] International law ratified by South Africa
 - [ ] Banking and finance law materials
-- [ ] Intellectual property law compilations
-- [ ] Competition law guidelines and notices
+- [x] Intellectual property law compilations (CIPC)
+- [ ] Competition law guidelines and notices (CompCom)
 
 ## Procedural Materials
 
@@ -104,12 +105,12 @@ This checklist tracks the materials needed to build a comprehensive South Africa
 
 ## Progress Summary
 
-**Overall Completion**: 46/71 items (65%)
+**Overall Completion**: 52/72 items (72%)
 
 **By Category**:
-- Legislative Framework: 25/29 (86%)
+- Legislative Framework: 27/29 (93%)
 - Case Law: 8/11 (73%)
-- Secondary Legal Sources: 3/14 (21%)
+- Secondary Legal Sources: 7/15 (47%)
 - Procedural Materials: 5/5 (100%)
 - Historical and Contextual Materials: 5/5 (100%)
 - Technical Processing Requirements: 0/7 (0%)
