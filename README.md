@@ -444,9 +444,9 @@ python3 scripts/serve_checklist.py
 
 A comprehensive collection of South African legal documents for training or fine-tuning Legal Large Language Models (LLMs).
 
-## Project Status: 83% Complete
+## Project Status: 85% Complete
 
-The South African Legal LLM Dataset project is currently **83% complete** (60 out of 72 items). We have made significant progress in collecting and processing South African legal documents across various categories.
+The South African Legal LLM Dataset project is currently **85% complete** (61 out of 72 items). We have made significant progress in collecting and processing South African legal documents across various categories.
 
 ### Completion by Category:
 
@@ -469,6 +469,9 @@ The South African Legal LLM Dataset project is currently **83% complete** (60 ou
   - International law ratified by South Africa ✅
   - Law Journal articles ✅
   - Environmental law compilations ✅
+  - Legal dictionaries and glossaries ✅
+  - Tax law commentaries and guides ✅
+  - Intellectual property law compilations ✅
 
 - **Procedural Materials**: 100% complete (5/5 items)
   - Rules of Court ✅
