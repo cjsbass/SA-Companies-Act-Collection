@@ -1,0 +1,66 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+wheels/
+*.egg-info/
+.installed.cfg
+*.egg
+
+# Virtual Environment
+.env
+.venv
+env/
+venv/
+ENV/
+
+# IDE
+.idea/
+.vscode/
+*.swp
+*.swo
+.DS_Store
+
+# Logs
+*.log
+logs/
+log/
+
+# Temporary files
+*.tmp
+*.bak
+*.swp
+*~
+
+# Large binary files (PDFs, etc)
+*.pdf
+*.doc
+*.docx
+*.rtf
+
+# Output directories
+scrapers_output/
+downloads/
+processed_data/
+bert_data/
+
+# Local configuration
+.env
+config.local.json
+
+# Jupyter Notebook
+.ipynb_checkpoints
+*.ipynb 
