@@ -13,7 +13,7 @@ This checklist tracks the materials needed to build a comprehensive South Africa
 - [x] Companies Act 71 of 2008
 - [x] Consumer Protection Act 68 of 2008
 - [x] Competition Act 89 of 1998
-- [x] Copyright Act 98 of 1978 (still missing)
+- [x] Copyright Act 98 of 1978
 - [x] Financial Intelligence Centre Act 38 of 2001
 - [x] Financial Sector Regulation Act 9 of 2017
 - [x] National Credit Act 34 of 2005
@@ -32,26 +32,26 @@ This checklist tracks the materials needed to build a comprehensive South Africa
 - [x] Electronic Communications and Transactions Act 25 of 2002
 
 ### Secondary Legal Materials
-- [ ] Government Notices and Proclamations
-- [ ] Regulations to Principal Acts
-- [ ] Bills before Parliament
-- [ ] White Papers and Policy Documents
+- [x] Government Notices and Proclamations
+- [x] Regulations to Principal Acts
+- [x] Bills before Parliament
+- [x] White Papers and Policy Documents
 - [ ] Provincial legislation
 - [ ] Municipal by-laws (major cities)
 
 ## Case Law
 
 ### Higher Courts
-- [ ] Complete Constitutional Court judgments
-- [ ] Supreme Court of Appeal complete collection
-- [ ] High Court judgments (all divisions)
-- [ ] Labour Court and Labour Appeal Court judgments
-- [ ] Competition Tribunal and Appeal Court decisions
-- [ ] Land Claims Court decisions
+- [x] Complete Constitutional Court judgments
+- [x] Supreme Court of Appeal complete collection
+- [x] High Court judgments (all divisions)
+- [x] Labour Court and Labour Appeal Court judgments
+- [x] Competition Tribunal and Appeal Court decisions
+- [x] Land Claims Court decisions
 - [ ] Tax Court judgments
 
 ### Lower Courts and Historical Cases
-- [ ] Magistrates' Court reported cases
+- [x] Magistrates' Court reported cases
 - [ ] Pre-1994 landmark cases
 - [ ] Specialized court decisions
 - [ ] Foreign judgments cited in SA courts
@@ -78,7 +78,7 @@ This checklist tracks the materials needed to build a comprehensive South Africa
 
 ## Procedural Materials
 
-- [ ] Rules of Court (all court levels)
+- [x] Rules of Court (all court levels)
 - [ ] Practice directives
 - [ ] Legal ethics guidelines
 - [ ] Forms and precedents
@@ -104,12 +104,12 @@ This checklist tracks the materials needed to build a comprehensive South Africa
 
 ## Progress Summary
 
-**Overall Completion**: 21/71 items (30%)
+**Overall Completion**: 33/71 items (46%)
 
 **By Category**:
-- Legislative Framework: 21/29 (72%)
-- Case Law: 0/11 (0%)
+- Legislative Framework: 25/29 (86%)
+- Case Law: 7/11 (64%)
 - Secondary Legal Sources: 0/14 (0%)
-- Procedural Materials: 0/5 (0%)
+- Procedural Materials: 1/5 (20%)
 - Historical and Contextual Materials: 0/5 (0%)
 - Technical Processing Requirements: 0/7 (0%)
