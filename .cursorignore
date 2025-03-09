@@ -1,6 +1,25 @@
 # Tell Cursor not to index these large directories
 scrapers_output/
 .venv/
+.venv-explorer/
 **/node_modules/
 **/__pycache__/
-**/.pytest_cache/ 
+**/.pytest_cache/
+**/.ipynb_checkpoints/
+
+# Large files that shouldn't be indexed
+**/*.pdf
+**/*.rtf
+**/*.doc
+**/*.docx
+**/*.zip
+**/*.gz
+**/*.tar
+**/*.mp4
+**/*.mov
+
+# Temporary and log files
+**/nohup.out
+**/*.log
+**/*.tmp
+**/all_pdfs.txt 

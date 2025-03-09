@@ -18,7 +18,39 @@ The document collection in `scrapers_output` is very large (35GB+) and contains 
 - `.cursorignore`: Prevents Cursor from indexing the large `scrapers_output` directory
 - `.cursor-settings/settings.json`: Optimized settings for better performance
 
-### 2. Document Analysis Tool
+### 2. Fixing Cursor Crashes
+
+If you experience Cursor crashes while working with this large repository, you can use our automated fix script:
+
+```bash
+# Make the script executable if needed
+chmod +x scripts/fix_cursor_crashes.sh
+
+# Run the fix script
+./scripts/fix_cursor_crashes.sh
+```
+
+This script will:
+- Clean temporary files and logs that might cause memory issues
+- Stop background processes that could be consuming resources
+- Clear Cursor application caches
+- Ensure your `.cursorignore` and settings files are properly configured
+- Set performance mode for better handling of large repositories
+
+You can also manually clean temporary files:
+
+```bash
+# Clean only temporary files
+python3 scripts/clean_workspace.py --temp
+
+# Clean only Cursor cache
+python3 scripts/clean_workspace.py --cache
+
+# Clean everything
+python3 scripts/clean_workspace.py --all
+```
+
+### 3. Document Analysis Tool
 
 We've created a document analysis script that allows you to check your legal documents without requiring Cursor to index the entire directory:
 
@@ -33,7 +65,7 @@ python3 scripts/check_documents.py --search "companies act"
 python3 scripts/check_documents.py --report --output report.json
 ```
 
-### 3. Document Organization
+### 4. Document Organization
 
 To ensure the repository follows best practices for organization, we've created the `organize_documents.py` script:
 
@@ -72,7 +104,7 @@ For maintaining this legal document repository, we follow these best practices:
    - Document patterns and organization schemas are documented
    - Search and navigation tools are maintained and updated
 
-### 4. Web-Based Document Explorer
+### 5. Web-Based Document Explorer
 
 A web-based explorer for browsing and searching the document collection:
 
