@@ -40,6 +40,13 @@ class CoreLegislationDownloader:
                     "url": "https://www.justice.gov.za/legislation/acts/1977-051.pdf"
                 }
             },
+            "labour": {
+                "Labour Relations Act": {
+                    "number": "66",
+                    "year": "1995",
+                    "url": "https://www.gov.za/sites/default/files/gcis_document/201409/act66-1995labourrelations.pdf"
+                }
+            },
             "commercial": {
                 "Companies Act": {
                     "number": "71",

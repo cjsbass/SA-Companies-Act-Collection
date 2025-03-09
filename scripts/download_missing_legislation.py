@@ -225,11 +225,70 @@ def main():
     parser.add_argument("--force", action="store_true", help="Force download even if already present")
     parser.add_argument("--constitution", action="store_true", help="Download the Constitution of South Africa")
     parser.add_argument("--criminal-procedure", action="store_true", help="Download the Criminal Procedure Act")
+    parser.add_argument("--labour-relations", action="store_true", help="Download the Labour Relations Act")
     args = parser.parse_args()
     
     downloader = LegislationDownloader()
     
-    if args.criminal_procedure:
+    if args.labour_relations:
+        # Special case for the Labour Relations Act
+        logger.info("Downloading the Labour Relations Act 66 of 1995")
+        
+        # Create the labour category if it doesn't exist
+        labour_dir = os.path.join(downloader.core_legislation_dir, "labour")
+        os.makedirs(labour_dir, exist_ok=True)
+        
+        # URLs for the Labour Relations Act
+        labour_urls = [
+            "https://www.gov.za/sites/default/files/gcis_document/201409/act66-1995labourrelations.pdf",  # Gov.za version
+            "https://www.labour.gov.za/DocumentCenter/Acts/Labour%20Relations%20Act/Labour%20Relations%20Act,%201995%20(Act%20No%2066%20of%201995).pdf",  # Labour dept version
+            "https://www.saqa.org.za/docs/legislation/2018/Labour-Relations-Act.pdf"  # SAQA version
+        ]
+        
+        # Try each URL until one works
+        success = False
+        for url in labour_urls:
+            try:
+                # Create a temporary file to download to
+                with tempfile.NamedTemporaryFile(delete=False) as temp_file:
+                    logger.info(f"Trying to download from {url}")
+                    
+                    # Set up a session with proper headers
+                    session = requests.Session()
+                    session.headers.update({
+                        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36'
+                    })
+                    
+                    # Download the file
+                    response = session.get(url, stream=True)
+                    response.raise_for_status()
+                    
+                    # Write the PDF to a temporary file
+                    for chunk in response.iter_content(chunk_size=8192):
+                        if chunk:
+                            temp_file.write(chunk)
+                    
+                    temp_file_path = temp_file.name
+                
+                # Construct the final path
+                target_path = os.path.join(labour_dir, "Labour Relations Act 66 of 1995.pdf")
+                
+                # Move the temporary file to the final location
+                shutil.move(temp_file_path, target_path)
+                logger.info(f"Labour Relations Act downloaded to {target_path}")
+                
+                success = True
+                break
+            except Exception as e:
+                logger.error(f"Error downloading from {url}: {str(e)}")
+        
+        if success:
+            return 0
+        else:
+            logger.error("Failed to download the Labour Relations Act from any source")
+            return 1
+    
+    elif args.criminal_procedure:
         # Special case for the Criminal Procedure Act
         logger.info("Downloading the Criminal Procedure Act 51 of 1977")
         
