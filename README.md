@@ -442,98 +442,212 @@ python3 scripts/serve_checklist.py
 
 # South African Legal LLM Dataset
 
-This repository contains a comprehensive collection of South African legal documents for training a Legal BERT model specialized in South African law. The dataset includes legislation, case law, procedural materials, historical documents, and secondary legal sources.
+This repository contains a comprehensive collection of South African legal materials for training a Legal Language Model (LLM). Our goal is to create the most complete freely available dataset of South African legal documents.
 
-## Project Progress
+## Project Status
 
-We have achieved 65% completion of our South African Legal LLM Dataset, with the following breakdown by category:
+🎯 **Overall Completion: 72%** (52/72 checklist items)
 
-- **Legislative Framework**: 86% complete (25/29 items)
-- **Case Law**: 73% complete (8/11 items)
-- **Procedural Materials**: 100% complete (5/5 items) ✅
-- **Historical and Contextual Materials**: 100% complete (5/5 items) ✅
-- **Secondary Legal Sources**: 21% complete (3/14 items)
-- **Technical Processing Requirements**: 0% complete (0/7 items)
+| Category | Completion | Details |
+|----------|------------|---------|
+| **Legislative Framework** | 93% (27/29) | All Principal Acts, Constitution, Provincial & Municipal |
+| **Case Law** | 73% (8/11) | All Higher Courts and Magistrates' Court cases |
+| **Secondary Legal Sources** | 47% (7/15) | Specialized domains and open textbooks |
+| **Procedural Materials** | 100% (5/5) | Complete with all court rules, ethics, forms |
+| **Historical Materials** | 100% (5/5) | Complete with historical sources |
+| **Technical Processing** | 0% (7/7) | Not yet started |
 
-## Dataset Organization
+## Project Structure
 
-The repository is organized into the following main directories:
+- `scrapers_output/`: All downloaded legal documents (35GB+, 113,000+ files)
+  - `core_legislation/`: Essential legislation documents
+  - `case_law/`: Court judgments from all courts
+  - `provincial_legislation/`: Provincial gazettes from all 9 provinces
+  - `municipal_by_laws/`: Municipal by-laws from major cities
+  - `textbooks/`: Open access legal textbooks
+  - `specialized_domains/`: Specialized legal materials (tax, environment, IP)
+  - `procedural/`: Procedural materials and court rules
+  - `historical/`: Historical legislation and legal documents
+- `scripts/`: Utility scripts for working with the document collection
+  - `download_missing_legislation.py`: Download legal materials
+  - `update_llm_checklist.py`: Update project progress
+  - `serve_checklist.py`: View progress in browser
+  - Various utility and analysis scripts
 
-- `scrapers_output/`: Contains all downloaded legal documents
-  - `core_legislation/`: Constitutional and principal acts
-  - `case_law/`: Judgments from all major courts
-  - `procedural/`: Rules of court, practice directives, etc.
-  - `historical/`: Roman-Dutch law, historical legislation, etc.
-  - `secondary_legal/`: Dictionaries, journals, law reform reports
+## Recently Added Resources
 
-- `scripts/`: Utility scripts for downloading and processing documents
-  - `scrapers/`: Scripts for scraping legal documents
-  - `download_missing_legislation.py`: Main script for downloading legal materials
-  - `update_llm_checklist.py`: Script for updating the dataset checklist
-  - `serve_checklist.py`: Web interface for viewing dataset progress
+We've recently expanded our collection with important freely available South African legal materials:
 
-## Freely Available Resources
+### 1. Provincial Legislation
+- Provincial gazettes from all 9 provinces via gazettes.africa
+- Contains official provincial regulations and notices
 
-We've identified numerous freely available resources for legal documents, including:
+### 2. Municipal By-laws
+- By-laws from major municipalities including Cape Town, Johannesburg, Durban, Tshwane
+- Local regulations affecting businesses and citizens
 
-### 1. Additional Resources
-- **SAFLII** (https://www.saflii.org): South African Legal Information Institute provides free access to case law and legislation
-- **Gazettes.africa** (https://gazettes.africa/gazettes/za): Provincial gazettes and legislation
-- **OpenGazettes** (https://opengazettes.org.za): Historical gazettes archive
-- **Municipal Websites**: By-laws from major cities like Cape Town, Johannesburg, and Durban
-- **UCT OpenBooks**: Free legal textbooks including "Constitutional Law for Students"
-- **Directory of Open Access Books**: Legal texts published under open access licenses
+### 3. Open Access Legal Textbooks
+- University of Cape Town OpenBooks' "Constitutional Law for Students"
+- Legal materials from the Directory of Open Access Books (DOAB)
 
-### 2. Specialized Legal Resources
-- **South African Revenue Service (SARS)**: Tax law guides and commentaries
-- **Companies and Intellectual Property Commission (CIPC)**: IP law resources
-- **Competition Commission**: Guidelines and notices
-- **Department of Forestry, Fisheries and Environment**: Environmental law compilations
-- **LSSALEAD**: Practice manuals for legal practitioners
+### 4. Specialized Legal Domains
+- **Tax Law**: Tax guides and resources from SARS
+- **Environmental Law**: Compilations from the Department of Forestry, Fisheries and Environment (DFFE)
+- **Intellectual Property Law**: Guidelines, forms and resources from CIPC
 
-## Using the Checklist Tool
+## Working with Large Document Collection
 
-The repository includes a web-based checklist tool to track progress:
+The document collection in `scrapers_output` is very large (35GB+) and contains over 113,000 files. To work efficiently with this collection while keeping Cursor running fast, we've implemented several optimizations:
+
+### 1. Cursor Optimizations
+
+- `.cursorignore`: Prevents Cursor from indexing the large `scrapers_output` directory
+- `.cursor-settings/settings.json`: Optimized settings for better performance
+
+### 2. Fixing Cursor Crashes
+
+If you experience Cursor crashes while working with this large repository, you can use our automated fix script:
 
 ```bash
-# Start the checklist server
-python3 scripts/serve_checklist.py
+# Make the script executable if needed
+chmod +x scripts/fix_cursor_crashes.sh
 
-# View the checklist in your browser
-open http://localhost:8742/checklist
+# Run the fix script
+./scripts/fix_cursor_crashes.sh
 ```
+
+This script will:
+- Clean temporary files and logs that might cause memory issues
+- Stop background processes that could be consuming resources
+- Clear Cursor application caches
+- Ensure your `.cursorignore` and settings files are properly configured
+- Set performance mode for better handling of large repositories
+
+You can also manually clean temporary files:
+
+```bash
+# Clean only temporary files
+python3 scripts/clean_workspace.py --temp
+
+# Clean only Cursor cache
+python3 scripts/clean_workspace.py --cache
+
+# Clean everything
+python3 scripts/clean_workspace.py --all
+```
+
+### 3. Document Analysis Tool
+
+We've created a document analysis script that allows you to check your legal documents without requiring Cursor to index the entire directory:
+
+```bash
+# Generate a report on document formats
+python3 scripts/check_documents.py --report
+
+# Search for documents matching criteria
+python3 scripts/check_documents.py --search "companies act"
+
+# Save report to JSON file
+python3 scripts/check_documents.py --report --output report.json
+```
+
+### 4. Document Organization
+
+To ensure the repository follows best practices for organization, we've created the `organize_documents.py` script:
+
+```bash
+# Check for missing core legislation
+python3 scripts/organize_documents.py --check-missing
+
+# Generate a full organization report
+python3 scripts/organize_documents.py
+
+# Save the report to a file
+python3 scripts/organize_documents.py --report organization_report.json
+```
+
+### 5. Web-Based Document Explorer
+
+A web-based explorer for browsing and searching the document collection:
+
+```bash
+# Install requirements
+pip install -r scripts/explorer_requirements.txt
+
+# Run the explorer on port 8888
+python3 scripts/document_explorer.py --port 8888
+```
+
+You can then access the explorer at http://localhost:8888/ to browse all documents, filter by court or category, and search for specific documents.
 
 ## Downloading Legal Materials
 
-We provide scripts to download legal materials from various sources:
+We've created a comprehensive downloader script that can fetch various types of legal materials:
 
 ```bash
-# Download all available materials
+# Download all legal materials concurrently
 python3 scripts/download_missing_legislation.py --all
 
-# Download specific categories
-python3 scripts/download_missing_legislation.py --tax-court
-python3 scripts/download_missing_legislation.py --practice-directives
-python3 scripts/download_missing_legislation.py --roman-dutch
+# Download specific types of legal materials
+python3 scripts/download_missing_legislation.py --provincial  # Provincial gazettes
+python3 scripts/download_missing_legislation.py --municipal   # Municipal by-laws
+python3 scripts/download_missing_legislation.py --textbooks   # Open access textbooks
+
+# Download specialized legal domains
+python3 scripts/download_missing_legislation.py --specialized  # All specialized domains
+
+# Download specific legislation
+python3 scripts/download_missing_legislation.py --constitution  # Constitution of South Africa
 ```
+
+## Checking Progress
+
+You can check the current status of the project using our checklist tool:
+
+```bash
+# Start the checklist web server
+python3 scripts/serve_checklist.py
+
+# Open the checklist in your browser
+open http://localhost:8742/checklist
+
+# Update the checklist statistics
+python3 scripts/update_llm_checklist.py
+```
+
+## Next Steps
+
+We're focusing on these areas to further enhance the dataset:
+
+1. **Fix SSL Certificate Issues**: Add option to bypass SSL verification for problematic government websites
+2. **Add International Treaties**: Download South African ratified treaties from UN Treaty Collection
+3. **Banking & Finance Materials**: Add resources from South African Reserve Bank (SARB)
+4. **Technical Processing Development**: Begin developing citation recognition and legal hierarchy modeling
+5. **Open Access Law Journals**: Collect freely available law journal articles
 
 ## Preparing Data for Legal BERT Training
 
-The collected documents are being prepared for training a Legal BERT model specialized in South African law. This involves:
+The document collection provides an excellent foundation for training a Legal BERT model specialized in South African law:
 
-1. **Text Extraction**: Extracting plain text from different file formats
-2. **Text Cleaning**: Removing headers, footers, and standardizing formatting
-3. **Sentence Segmentation**: Splitting documents into appropriate training units
-4. **BERT-Ready Format**: Converting to the format expected by BERT
+### Document Processing Pipeline
 
-## South African Legal Domain Considerations
+To prepare this data for Legal BERT training, the following steps are planned:
 
-When training a Legal BERT model for South African law, several unique characteristics are considered:
+1. **Text Extraction**: Extract plain text from various file formats (HTML, PDF, RTF, DOC)
+2. **Text Cleaning**: Remove headers, footers, page numbers; standardize formatting
+3. **Legal Citation Recognition**: Identify and standardize legal citations
+4. **Sentence Segmentation**: Split documents into appropriate units for BERT training
+5. **BERT Format Conversion**: Create training, validation, and test splits
 
-1. **Mixed Legal System**: South Africa combines Roman-Dutch civil law, English common law, and indigenous customary law
-2. **Constitutional Jurisprudence**: Post-apartheid constitutional principles form a significant part of modern law
-3. **Multilingual Context**: Legal documents may include terms from South Africa's 11 official languages
-4. **Unique Citation Patterns**: South African legal citations follow specific formats
+### South African Legal Domain Considerations
+
+The South African legal system has unique characteristics that must be considered:
+
+1. **Mixed Legal System**: South Africa uses a hybrid of Roman-Dutch civil law and English common law
+2. **Constitutional Supremacy**: The Constitution is the highest law, unlike in some common law jurisdictions
+3. **Customary Law Recognition**: Indigenous customary law is formally recognized
+4. **Multilingual Requirements**: South Africa has 11 official languages, though legal documents are primarily in English
+5. **Post-Apartheid Transformation**: Significant legal changes since 1994 must be properly represented
 
 ## Contributing
 
