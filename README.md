@@ -202,7 +202,7 @@ The documents are available in various formats (HTML, PDF, RTF, DOC) and require
 To prepare this data for Legal BERT training, the following steps are recommended:
 
 1. **Create a Processing Pipeline**:
-   ```bash
+```bash
    # Install required dependencies
    pip install transformers datasets pandas tqdm nltk beautifulsoup4 pdfminer.six python-docx
    
@@ -407,3 +407,122 @@ python3 scripts/serve_checklist.py
   - National Credit Regulator (http://www.ncr.org.za/)
   - Financial Sector Conduct Authority (https://www.fsca.co.za/)
   - Information Regulator (https://www.justice.gov.za/inforeg/)
+
+# South African Legal LLM Dataset
+
+This repository contains a comprehensive collection of South African legal documents for training a Legal BERT model specialized in South African law. The dataset includes legislation, case law, procedural materials, historical documents, and secondary legal sources.
+
+## Project Progress
+
+We have achieved 65% completion of our South African Legal LLM Dataset, with the following breakdown by category:
+
+- **Legislative Framework**: 86% complete (25/29 items)
+- **Case Law**: 73% complete (8/11 items)
+- **Procedural Materials**: 100% complete (5/5 items) ✅
+- **Historical and Contextual Materials**: 100% complete (5/5 items) ✅
+- **Secondary Legal Sources**: 21% complete (3/14 items)
+- **Technical Processing Requirements**: 0% complete (0/7 items)
+
+## Dataset Organization
+
+The repository is organized into the following main directories:
+
+- `scrapers_output/`: Contains all downloaded legal documents
+  - `core_legislation/`: Constitutional and principal acts
+  - `case_law/`: Judgments from all major courts
+  - `procedural/`: Rules of court, practice directives, etc.
+  - `historical/`: Roman-Dutch law, historical legislation, etc.
+  - `secondary_legal/`: Dictionaries, journals, law reform reports
+
+- `scripts/`: Utility scripts for downloading and processing documents
+  - `scrapers/`: Scripts for scraping legal documents
+  - `download_missing_legislation.py`: Main script for downloading legal materials
+  - `update_llm_checklist.py`: Script for updating the dataset checklist
+  - `serve_checklist.py`: Web interface for viewing dataset progress
+
+## Freely Available Resources
+
+We've identified numerous freely available resources for legal documents, including:
+
+### 1. Additional Resources
+- **SAFLII** (https://www.saflii.org): South African Legal Information Institute provides free access to case law and legislation
+- **Gazettes.africa** (https://gazettes.africa/gazettes/za): Provincial gazettes and legislation
+- **OpenGazettes** (https://opengazettes.org.za): Historical gazettes archive
+- **Municipal Websites**: By-laws from major cities like Cape Town, Johannesburg, and Durban
+- **UCT OpenBooks**: Free legal textbooks including "Constitutional Law for Students"
+- **Directory of Open Access Books**: Legal texts published under open access licenses
+
+### 2. Specialized Legal Resources
+- **South African Revenue Service (SARS)**: Tax law guides and commentaries
+- **Companies and Intellectual Property Commission (CIPC)**: IP law resources
+- **Competition Commission**: Guidelines and notices
+- **Department of Forestry, Fisheries and Environment**: Environmental law compilations
+- **LSSALEAD**: Practice manuals for legal practitioners
+
+## Using the Checklist Tool
+
+The repository includes a web-based checklist tool to track progress:
+
+```bash
+# Start the checklist server
+python3 scripts/serve_checklist.py
+
+# View the checklist in your browser
+open http://localhost:8742/checklist
+```
+
+## Downloading Legal Materials
+
+We provide scripts to download legal materials from various sources:
+
+```bash
+# Download all available materials
+python3 scripts/download_missing_legislation.py --all
+
+# Download specific categories
+python3 scripts/download_missing_legislation.py --tax-court
+python3 scripts/download_missing_legislation.py --practice-directives
+python3 scripts/download_missing_legislation.py --roman-dutch
+```
+
+## Preparing Data for Legal BERT Training
+
+The collected documents are being prepared for training a Legal BERT model specialized in South African law. This involves:
+
+1. **Text Extraction**: Extracting plain text from different file formats
+2. **Text Cleaning**: Removing headers, footers, and standardizing formatting
+3. **Sentence Segmentation**: Splitting documents into appropriate training units
+4. **BERT-Ready Format**: Converting to the format expected by BERT
+
+## South African Legal Domain Considerations
+
+When training a Legal BERT model for South African law, several unique characteristics are considered:
+
+1. **Mixed Legal System**: South Africa combines Roman-Dutch civil law, English common law, and indigenous customary law
+2. **Constitutional Jurisprudence**: Post-apartheid constitutional principles form a significant part of modern law
+3. **Multilingual Context**: Legal documents may include terms from South Africa's 11 official languages
+4. **Unique Citation Patterns**: South African legal citations follow specific formats
+
+## Contributing
+
+To contribute to this project, you can:
+
+1. Help download additional legal materials
+2. Improve the data processing scripts
+3. Contribute to the documentation
+4. Assist with the BERT model training configuration
+
+## License Information
+
+The dataset is compiled from publicly available legal documents that are generally not subject to copyright. However, when using this dataset, please:
+
+1. Respect the terms of use of the original sources
+2. Provide proper attribution when publishing results
+3. Use the dataset for research and educational purposes
+
+## Acknowledgments
+
+This project builds on the work of:
+- South African Legal Information Institute (SAFLII)
+- South African Government Publications
+- Open access legal resources from South African universities
