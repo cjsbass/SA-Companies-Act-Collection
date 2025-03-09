@@ -444,39 +444,47 @@ python3 scripts/serve_checklist.py
 
 A comprehensive collection of South African legal documents for training or fine-tuning Legal Large Language Models (LLMs).
 
-## Project Status: 72% Complete
+## Project Status: 83% Complete
 
-The South African Legal LLM Dataset project is currently **72% complete** (51 out of 71 items). We have made significant progress in collecting and processing South African legal documents across various categories.
+The South African Legal LLM Dataset project is currently **83% complete** (60 out of 72 items). We have made significant progress in collecting and processing South African legal documents across various categories.
 
 ### Completion by Category:
 
-- **Legislative Framework**: 92% complete (27/29 items)
+- **Legislative Framework**: 93% complete (27/29 items)
   - Constitution of South Africa ✅
   - Companies Act and Regulations ✅
   - All Principal Acts ✅
   - Amended legislation ✅
   - Most subordinate legislation ✅
 
-- **Case Law**: 82% complete (9/11 items)
+- **Case Law**: 73% complete (8/11 items)
   - Constitutional Court judgments ✅
   - Supreme Court of Appeal judgments ✅
   - High Court judgments ✅
   - Companies Tribunal decisions ✅
   - CIPC practice notes ✅
 
-- **Procedural Materials**: 60% complete (3/5 items)
-  - Rules of Court ✅
-  - Practice directives ✅
-  - Legal practice guides ✅
-
-- **Secondary Legal Sources**: 40% complete (2/5 items)
+- **Secondary Legal Sources**: 60% complete (9/15 items)
   - Banking and finance law materials ✅
   - International law ratified by South Africa ✅
+  - Law Journal articles ✅
+  - Environmental law compilations ✅
 
-- **Historical and Contextual Materials**: 33% complete (1/3 items)
-  - Legislative history and parliamentary debates ✅
+- **Procedural Materials**: 100% complete (5/5 items)
+  - Rules of Court ✅
+  - Practice directives ✅
+  - Legal ethics guidelines ✅
+  - Forms and precedents ✅
+  - Law Society guidelines ✅
 
-- **Technical Processing Requirements**: 100% complete (9/9 items)
+- **Historical and Contextual Materials**: 100% complete (5/5 items)
+  - Roman-Dutch law sources ✅
+  - Historical legislation ✅
+  - Legal development commentaries ✅
+  - Comparative law studies ✅
+  - Legal anthropology studies ✅
+
+- **Technical Processing Requirements**: 100% complete (7/7 items)
   - Citation pattern recognition ✅
   - Legal document structure analysis ✅
   - Cross-reference mapping ✅
@@ -484,8 +492,6 @@ The South African Legal LLM Dataset project is currently **72% complete** (51 ou
   - Temporal versioning ✅
   - Multi-language processing ✅
   - Legal reasoning pattern extraction ✅
-  - Document preprocessing ✅
-  - Data organization ✅
 
 ## Dataset Organization
 
@@ -571,6 +577,46 @@ The project now includes a comprehensive set of technical processing tools for l
 
 ## Using the Dataset
 
+### Docker Setup for Document Processing
+
+To avoid dependency issues, we've created a Docker environment for document processing. This ensures consistent processing across different environments.
+
+#### Using Docker Compose
+
+The easiest way to use the processing tools is with Docker Compose:
+
+```bash
+# Build the Docker images
+docker-compose build
+
+# Process documents
+docker-compose run legal-processor --input /app/scrapers_output --output /app/processed_output
+
+# Start the checklist server
+docker-compose up checklist-server
+```
+
+#### Using the Helper Script
+
+We've also created a helper script to make processing even easier:
+
+```bash
+# Make the script executable (if needed)
+chmod +x scripts/run_processing.sh
+
+# Process all documents
+./scripts/run_processing.sh
+
+# Process only citations from a specific file
+./scripts/run_processing.sh --file ./scrapers_output/core_legislation/acts/Companies_Act_71_of_2008.pdf --citations
+
+# Limit processing to 100 files
+./scripts/run_processing.sh --limit 100
+
+# See all available options
+./scripts/run_processing.sh --help
+```
+
 ### Checklist Tool
 
 We provide a checklist tool to track progress and ensure comprehensive coverage. Run the checklist server:
@@ -590,16 +636,6 @@ python3 scripts/download_missing_legislation.py --help
 ```
 
 Available options include downloading specific types of legislation (acts, regulations, case law, etc.) and bypassing SSL verification for problematic websites.
-
-### Processing Documents
-
-To process legal documents for LLM training:
-
-```bash
-python3 scripts/process_legal_documents.py --input ./scrapers_output --output ./processed_output
-```
-
-Options include processing specific aspects (citations, structure, cross-references, etc.) or individual files.
 
 ## Preparing Data for Training a Legal BERT Model
 

@@ -72,8 +72,8 @@ This checklist tracks the materials needed to build a comprehensive South Africa
 - [x] Environmental law compilations (DFFE)
 - [x] Tax law commentaries and guides (SARS)
 - [ ] Maritime law texts
-- [ ] International law ratified by South Africa
-- [ ] Banking and finance law materials
+- [x] International law ratified by South Africa
+- [x] Banking and finance law materials
 - [x] Intellectual property law compilations (CIPC)
 - [ ] Competition law guidelines and notices (CompCom)
 
@@ -95,22 +95,22 @@ This checklist tracks the materials needed to build a comprehensive South Africa
 
 ## Technical Processing Requirements
 
-- [ ] Citation pattern recognition development
-- [ ] Cross-reference mapping between sources
-- [ ] Legal hierarchy modeling
-- [ ] Temporal versioning of legislation
-- [ ] Multi-language processing capability (11 official languages)
-- [ ] Legal document structure analysis
-- [ ] Legal reasoning pattern extraction
+- [x] Citation pattern recognition development
+- [x] Cross-reference mapping between sources
+- [x] Legal hierarchy modeling
+- [x] Temporal versioning of legislation
+- [x] Multi-language processing capability (11 official languages)
+- [x] Legal document structure analysis
+- [x] Legal reasoning pattern extraction
 
 ## Progress Summary
 
-**Overall Completion**: 52/72 items (72%)
+**Overall Completion**: 60/72 items (83%)
 
 **By Category**:
 - Legislative Framework: 27/29 (93%)
 - Case Law: 8/11 (73%)
-- Secondary Legal Sources: 7/15 (47%)
+- Secondary Legal Sources: 9/15 (60%)
 - Procedural Materials: 5/5 (100%)
 - Historical and Contextual Materials: 5/5 (100%)
-- Technical Processing Requirements: 0/7 (0%)
+- Technical Processing Requirements: 7/7 (100%)

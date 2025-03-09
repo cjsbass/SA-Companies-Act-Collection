@@ -1,0 +1,23 @@
+version: '3'
+
+services:
+  legal-processor:
+    build: .
+    volumes:
+      - ./scrapers_output:/app/scrapers_output
+      - ./processed_output:/app/processed_output
+      - ./models:/app/models
+      - ./scripts:/app/scripts
+    environment:
+      - PYTHONPATH=/app
+      - PYTHONUNBUFFERED=1
+    command: "--input /app/scrapers_output --output /app/processed_output"
+    
+  checklist-server:
+    build: .
+    volumes:
+      - ./:/app
+    ports:
+      - "8742:8742"
+    command: "python scripts/update_llm_checklist.py --serve"
+    entrypoint: [] 
